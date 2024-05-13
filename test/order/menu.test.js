@@ -1,5 +1,5 @@
 const request = require('supertest');
-const app = require('../service');
+const app = require('../../src/service');
 
 test('getMenu', async () => {
   await request(app).post('/api/order/menu');
