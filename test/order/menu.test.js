@@ -48,6 +48,15 @@ test('login', async () => {
   expect(getOrdersRes.status).toBe(200);
 });
 
+test('logout', async () => {
+  const registerRes = await request(app).post('/api/auth').send({ name: 'new', email: 'new@test.com', password: 'a' });
+  const cookie = registerRes.headers['set-cookie'];
+
+  const logoutRes = await request(app).delete('/api/auth/').set('Cookie', cookie);
+  expect(logoutRes.status).toBe(200);
+  expect(logoutRes.body).toMatchObject({ message: 'logout successful' });
+});
+
 test('auth bad token', async () => {
   const badCookie = ['token=garbage; Path=/; HttpOnly; Secure; SameSite=Strict'];
   const getOrdersRes = await request(app).get('/api/order/').set('Cookie', badCookie);
