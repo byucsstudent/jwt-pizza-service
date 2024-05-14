@@ -5,6 +5,7 @@ const testUser = { name: 'pizza diner', email: 'reg@test.com', password: 'a' };
 let testUserCookie;
 
 beforeAll(async () => {
+  testUser.email = Math.random().toString(36).substring(2, 12) + '@test.com';
   const registerRes = await request(app).post('/api/auth').send(testUser);
   testUserCookie = registerRes.headers['set-cookie'];
 });
@@ -28,16 +29,15 @@ test('register bad params', async () => {
 });
 
 test('login', async () => {
-  const loginRes = await request(app)
-    .put('/api/auth')
-    .send(testUser)
-    .expect('set-cookie', /token=.*/);
-  expect(loginRes.status).toBe(200);
-  expect(loginRes.body).toMatchObject({ email: 'reg@test.com', name: 'pizza diner', roles: [{ role: 'diner' }] });
-  const cookie = loginRes.headers['set-cookie'];
+  const loginRes = await request(app).put('/api/auth').send(testUser);
 
-  const getOrdersRes = await request(app).get('/api/order/').set('Cookie', cookie);
-  expect(getOrdersRes.status).toBe(200);
+  expect(loginRes.status).toBe(200);
+
+  const cookies = loginRes.headers['set-cookie'];
+  expect(cookies[0]).toMatch(/token=.+; Path=\/; HttpOnly; Secure; SameSite=Strict/);
+
+  const { password, ...user } = { ...testUser, roles: [{ role: 'diner' }] };
+  expect(loginRes.body).toMatchObject(user);
 });
 
 test('logout', async () => {
@@ -52,5 +52,10 @@ test('logout', async () => {
 test('auth bad token', async () => {
   const badCookie = ['token=garbage; Path=/; HttpOnly; Secure; SameSite=Strict'];
   const getOrdersRes = await request(app).get('/api/order/').set('Cookie', badCookie);
+  expect(getOrdersRes.status).toBe(401);
+});
+
+test('auth no token', async () => {
+  const getOrdersRes = await request(app).get('/api/order/');
   expect(getOrdersRes.status).toBe(401);
 });
