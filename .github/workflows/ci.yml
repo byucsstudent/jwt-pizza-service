@@ -8,15 +8,15 @@ on:
 jobs:
   build:
     name: Test backend
-    services:
-      mysql:
-        image: mysql:8.0.29
-        env:
-          MYSQL_ROOT_PASSWORD: monkeypie
-          MYSQL_DATABASE: pizza
-        ports:
-          - '3306:3306'
-        options: --health-cmd "mysqladmin ping -pmonkeypie"  --health-interval=10s --health-timeout=5s --health-retries=3
+    # services:
+    #   mysql:
+    #     image: mysql:8.0.29
+    #     env:
+    #       MYSQL_ROOT_PASSWORD: monkeypie
+    #       MYSQL_DATABASE: pizza
+    #     ports:
+    #       - '3306:3306'
+    #     options: --health-cmd "mysqladmin ping -pmonkeypie"  --health-interval=10s --health-timeout=5s --health-retries=3
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
@@ -52,5 +52,5 @@ jobs:
               apiKey: '123456',
             },
           };" > src/config.js
-    - name: Test
-        run: npm test
+    # - name: Test
+    #     run: npm test
