@@ -8,65 +8,62 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # services:
-    #   mysql:
-    #     image: mysql:8.0.29
-    #     env:
-    #       MYSQL_ROOT_PASSWORD: monkeypie
-    #       MYSQL_DATABASE: pizza
-    #     ports:
-    #       - '3306:3306'
-    #     options: >-
-    #       --health-cmd "mysqladmin ping -pmonkeypie"
-    #       --health-interval 10s
-    #       --health-start-period 10s
-    #       --health-timeout 5s
-    #       --health-retries 10
+    services:
+      mysql:
+        image: mysql:8.0.29
+        env:
+          MYSQL_ROOT_PASSWORD: temppwd
+          MYSQL_DATABASE: pizza
+        ports:
+          - '3306:3306'
+        options: >-
+          --health-cmd "mysqladmin ping -ptemppwd"
+          --health-interval 10s
+          --health-start-period 10s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      # - name: Setup Node
-      #   uses: actions/setup-node@v4
-      #   with:
-      #     node-version: '20.x'
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
 
-      # - name: Install dependencies
-      #   run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-      # - name: Lint
-      #   run: npm run lint
+      - name: Lint
+        run: npm run lint
 
-      # - name: Write config file
-      #   run: |
-      #     echo "module.exports = {
-      #       jwtSecret: '908f908dsvjdfnjoidfabv0j9few09gfdesjibdfsnkml',
-      #       db: {
-      #         connection: {
-      #           host: '127.0.0.1',
-      #           user: 'root',
-      #           password: 'monkeypie',
-      #           database: 'pizza',
-      #           connectTimeout: 60000,
-      #         },
-      #         listPerPage: 10,
-      #       },
-      #       factory: {
-      #         url: 'https://jwt-pizza-factory.cs329.click',
-      #         apiKey: '123456',
-      #       },
-      #     };" > src/config.js
-
-      # - name: Tests
-      #   run: npm test
-
-      - name: Update README.md
+      - name: Write config file
         run: |
-          mkdir -p coverage
-          echo '{"total": {"lines":{"total":280,"covered":254,"skipped":0,"pct":90.71},"statements":{"total":286,"covered":258,"skipped":0,"pct":90.2},"functions":{"total":53,"covered":47,"skipped":0,"pct":88.67},"branches":{"total":61,"covered":40,"skipped":0,"pct":65.57},"branchesTrue":{"total":0,"covered":0,"skipped":0,"pct":100}}' > coverage/coverage-summary.json
+          echo "module.exports = {
+            jwtSecret: '908f908dsvjdfnjoidfabv0j9few09gfdesjibdfsnkml',
+            db: {
+              connection: {
+                host: '127.0.0.1',
+                user: 'root',
+                password: 'temppwd',
+                database: 'pizza',
+                connectTimeout: 60000,
+              },
+              listPerPage: 10,
+            },
+            factory: {
+              url: 'https://jwt-pizza-factory.cs329.click',
+              apiKey: '123456',
+            },
+          };" > src/config.js
+
+      - name: Tests
+        run: npm test
+
+      - name: Update README.md coverage
+        run: |
           coverage_pct=$(grep -o '"pct":[0-9.]*' coverage/coverage-summary.json | head -n 1 | cut -d ':' -f 2)
-          echo "coverage: $coverage_pct" >> README.md
-          sed -i "s/^coverage: .*/coverage: $coverage_pct/" README.md
+          sed -i "s/^Coverage: .*/Coverage: $coverage_pct/" README.md
           git config user.name github-actions
           git config user.email github-actions@github.com
           git add .
