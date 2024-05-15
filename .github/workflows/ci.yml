@@ -58,4 +58,4 @@ jobs:
           };" > src/config.js
 
       - name: Tests
-          run: npm test
+        run: npm test
