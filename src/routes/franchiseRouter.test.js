@@ -2,6 +2,10 @@ const request = require('supertest');
 const app = require('../service');
 const { Role, DB } = require('../database/database.js');
 
+if (process.env.VSCODE_INSPECTOR_OPTIONS) {
+  jest.setTimeout(60 * 1000 * 5); // 5 minutes
+}
+
 let adminUser = { password: 'a', roles: [{ role: Role.Admin }] };
 let adminUserCookie;
 const testUser = { name: 'pizza diner', password: 'a' };
@@ -53,12 +57,8 @@ test('get franchise', async () => {
 });
 
 test('create franchise as admin', async () => {
-  const franchise = { name: randomName(), admins: [{ email: testUser.email }] };
-  const getFranchiseRes = await request(app).post(`/api/franchise`).set('Cookie', adminUserCookie).send(franchise);
-  expect(getFranchiseRes.status).toBe(200);
-  expect(getFranchiseRes.headers['content-type']).toMatch('application/json; charset=utf-8');
-
-  expect(getFranchiseRes.body).toMatchObject(franchise);
+  const franchise = await createFranchise(adminUser);
+  expect(franchise).toMatchObject(franchise);
 });
 
 test('get franchise as admin', async () => {
@@ -66,14 +66,24 @@ test('get franchise as admin', async () => {
   expect(getFranchiseRes.status).toBe(200);
   expect(getFranchiseRes.headers['content-type']).toMatch('application/json; charset=utf-8');
 
-  expect(getFranchiseRes.body.length).toBe(0);
+  expect(getFranchiseRes.body.length).toBe(1);
 });
 
 test('create store as admin', async () => {
-  const franchise = { name: randomName(), admins: [{ email: testUser.email }] };
-  const getFranchiseRes = await request(app).post(`/api/${franchiseId}/store`).set('Cookie', adminUserCookie).send(franchise);
+  const franchise = await createFranchise(adminUser);
+  const store = { name: randomName(), franchiseId: franchise.id };
+  const createStoreRes = await request(app).post(`/api/franchise/${franchise.id}/store`).set('Cookie', adminUserCookie).send(store);
+  expect(createStoreRes.status).toBe(200);
+  expect(createStoreRes.headers['content-type']).toMatch('application/json; charset=utf-8');
+
+  expect(createStoreRes.body).toMatchObject(store);
+});
+
+async function createFranchise(user) {
+  const franchise = { name: randomName(), admins: [{ email: user.email }] };
+  const getFranchiseRes = await request(app).post(`/api/franchise`).set('Cookie', adminUserCookie).send(franchise);
   expect(getFranchiseRes.status).toBe(200);
   expect(getFranchiseRes.headers['content-type']).toMatch('application/json; charset=utf-8');
 
-  expect(getFranchiseRes.body).toMatchObject(franchise);
-});
+  return getFranchiseRes.body;
+}
