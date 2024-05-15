@@ -62,6 +62,8 @@ jobs:
 
       - name: Update README.md
         run: |
+          coverage_pct=$(grep -oP '(?<="lines":\{"total":\d+,"covered":\d+,"skipped":\d+,"pct":)[0-9.]+' coverage/coverage-summary.json)
+          echo "coverage: $coverage_pct" >> README.md
           sed -i 's/^coverage: .*/coverage: taco/' README.md
           git config user.name github-actions
           git config user.email github-actions@github.com
