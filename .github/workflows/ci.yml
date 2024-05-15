@@ -62,8 +62,7 @@ jobs:
 
       - name: Update README.md
         run: |
-          printf "\nrun done" >> README.md
-          date > generated.txt
+          sed -i 's/^coverage: .*/coverage: taco/' README.md
           git config user.name github-actions
           git config user.email github-actions@github.com
           git add .
