@@ -1,0 +1,23 @@
+name: Build and test
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: Build
+        run: |
+          npm ci && npm run build
