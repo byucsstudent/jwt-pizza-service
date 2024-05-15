@@ -1,27 +1,12 @@
 const request = require('supertest');
 const app = require('../service');
-const { Role, DB } = require('../database/database.js');
+const TestHelper = require('../testHelper.js');
 
-if (process.env.VSCODE_INSPECTOR_OPTIONS) {
-  jest.setTimeout(60 * 1000 * 5); // 5 minutes
-}
-
-let adminUser = { password: 'a', roles: [{ role: Role.Admin }] };
+let adminUser;
 let adminUserCookie;
 
-function randomName() {
-  return Math.random().toString(36).substring(2, 12);
-}
-
 beforeAll(async () => {
-  adminUser.name = randomName();
-  adminUser.email = adminUser.name + '@admin.com';
-
-  const addRes = await DB.addUser(adminUser);
-  adminUser = { ...adminUser, id: addRes.id, password: 'a' };
-
-  const registerRes = await request(app).put('/api/auth').send(adminUser);
-  adminUserCookie = registerRes.headers['set-cookie'];
+  [adminUser, adminUserCookie] = await TestHelper.createAdminUser();
 });
 
 test('get franchise', async () => {
@@ -33,7 +18,7 @@ test('get franchise', async () => {
 });
 
 test('create franchise', async () => {
-  const franchise = await createFranchise(adminUser);
+  const franchise = await createFranchise(adminUser, adminUserCookie);
   expect(franchise).toMatchObject(franchise);
 });
 
@@ -43,14 +28,14 @@ test('get franchises', async () => {
 });
 
 test('create store', async () => {
-  const franchise = await createFranchise(adminUser);
+  const franchise = await createFranchise(adminUser, adminUserCookie);
   const store = await createStore(franchise.id, adminUserCookie);
 
   expect(store).toMatchObject(store);
 });
 
 test('delete store', async () => {
-  const franchise = await createFranchise(adminUser);
+  const franchise = await createFranchise(adminUser, adminUserCookie);
   const store = await createStore(franchise.id, adminUserCookie);
   const { status, body: deleteStoreRes } = await request(app).delete(`/api/franchise/${franchise.id}/store/${store.id}`).set('Cookie', adminUserCookie);
   expect(status).toBe(200);
@@ -60,7 +45,7 @@ test('delete store', async () => {
 });
 
 test('delete franchise', async () => {
-  const franchise = await createFranchise(adminUser);
+  const franchise = await createFranchise(adminUser, adminUserCookie);
   const store = await createStore(franchise.id, adminUserCookie);
   const { status, body: deleteFranchiseRes } = await request(app).delete(`/api/franchise/${franchise.id}`).set('Cookie', adminUserCookie);
   expect(status).toBe(200);
@@ -87,9 +72,9 @@ async function getStore(franchiseId, storeId, user, userCookie) {
   return undefined;
 }
 
-async function createFranchise(user) {
-  const franchise = { name: randomName(), admins: [{ email: user.email }] };
-  const getFranchiseRes = await request(app).post(`/api/franchise`).set('Cookie', adminUserCookie).send(franchise);
+async function createFranchise(user, userCookie) {
+  const franchise = { name: TestHelper.randomName(), admins: [{ email: user.email }] };
+  const getFranchiseRes = await request(app).post(`/api/franchise`).set('Cookie', userCookie).send(franchise);
   expect(getFranchiseRes.status).toBe(200);
   expect(getFranchiseRes.headers['content-type']).toMatch('application/json; charset=utf-8');
 
@@ -97,7 +82,7 @@ async function createFranchise(user) {
 }
 
 async function createStore(franchiseId, userCookie) {
-  const store = { name: randomName(), franchiseId: franchiseId };
+  const store = { name: TestHelper.randomName(), franchiseId: franchiseId };
   const createStoreRes = await request(app).post(`/api/franchise/${franchiseId}/store`).set('Cookie', userCookie).send(store);
   expect(createStoreRes.status).toBe(200);
   expect(createStoreRes.headers['content-type']).toMatch('application/json; charset=utf-8');
@@ -111,3 +96,5 @@ async function getFranchises(user, userCookie) {
   expect(getFranchisesRes.headers['content-type']).toMatch('application/json; charset=utf-8');
   return getFranchisesRes.body;
 }
+
+module.exports = { getFranchise, getStore, createFranchise, createStore, getFranchises };

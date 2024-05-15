@@ -1,11 +1,11 @@
 const request = require('supertest');
 const app = require('../service');
+const TestHelper = require('../testHelper.js');
 
-const testUser = { name: 'pizza diner', email: 'reg@test.com', password: 'a' };
+let testUser;
 
 beforeAll(async () => {
-  testUser.email = Math.random().toString(36).substring(2, 12) + '@test.com';
-  await request(app).post('/api/auth').send(testUser);
+  [testUser] = await TestHelper.createDinerUser();
 });
 
 test('register', async () => {
