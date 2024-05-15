@@ -7,6 +7,7 @@ on:
 
 jobs:
   build:
+    runs-on: ubuntu-latest
     services:
       mysql:
         image: mysql:8.0.29
@@ -21,7 +22,6 @@ jobs:
           --health-start-period 10s
           --health-timeout 5s
           --health-retries 10
-    runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -56,5 +56,6 @@ jobs:
               apiKey: '123456',
             },
           };" > src/config.js
-      - name: Test
+
+      - name: Tests
           run: npm test
