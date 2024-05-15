@@ -1,6 +1,6 @@
 # jwt-pizza-service
 
-coverage: taco
+coverage: 90.71
 
 Backend service for making JWT pizzas. This service tracks users and franchises and orders pizzas. All order requests are passed to the JWT Pizza Factory where the pizzas are made.
 
@@ -53,3 +53,4 @@ npm -g install nodemon
 ```
 
 run done
+coverage: 90.71
