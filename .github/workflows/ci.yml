@@ -62,6 +62,7 @@ jobs:
 
       - name: Update README.md
         run: |
+          mkdir -p coverage
           echo '{"total": {"lines":{"total":280,"covered":254,"skipped":0,"pct":90.71},"statements":{"total":286,"covered":258,"skipped":0,"pct":90.2},"functions":{"total":53,"covered":47,"skipped":0,"pct":88.67},"branches":{"total":61,"covered":40,"skipped":0,"pct":65.57},"branchesTrue":{"total":0,"covered":0,"skipped":0,"pct":100}}' > coverage/coverage-summary.json
           coverage_pct=$(grep -o '"pct":[0-9.]*' coverage/coverage-summary.json | head -n 1 | cut -d ':' -f 2)
           echo "coverage: $coverage_pct" >> README.md
