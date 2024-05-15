@@ -4,9 +4,14 @@ const TestHelper = require('../testHelper.js');
 
 let adminUser;
 let adminUserCookie;
+let franchiseUser;
+let franchiseUserCookie;
+let testFranchise;
 
 beforeAll(async () => {
   [adminUser, adminUserCookie] = await TestHelper.createAdminUser();
+  [franchiseUser, franchiseUserCookie] = await TestHelper.createDinerUser();
+  testFranchise = await createFranchise(franchiseUser, adminUserCookie);
 });
 
 test('get franchise', async () => {
@@ -14,34 +19,37 @@ test('get franchise', async () => {
   expect(getFranchiseRes.status).toBe(200);
   expect(getFranchiseRes.headers['content-type']).toMatch('application/json; charset=utf-8');
 
+  const franchise = getFranchiseRes.body.find((item) => item.id === testFranchise.id);
+  expect(franchise).toMatchObject(franchise);
+
   expect(getFranchiseRes.body.length).not.toBe(0);
+  expect(franchise).toMatchObject(franchise);
 });
 
 test('create franchise', async () => {
   const franchise = await createFranchise(adminUser, adminUserCookie);
-  expect(franchise).toMatchObject(franchise);
+  expect(franchise.admins[0].id).toBe(adminUser.id);
 });
 
-test('get franchises', async () => {
-  const franchises = await getFranchises(adminUser, adminUserCookie);
+test('get franchises for users', async () => {
+  const franchises = await getFranchises(franchiseUser, franchiseUserCookie);
   expect(franchises.length).toBe(1);
+  expect(franchises[0]).toMatchObject(testFranchise);
 });
 
 test('create store', async () => {
-  const franchise = await createFranchise(adminUser, adminUserCookie);
-  const store = await createStore(franchise.id, adminUserCookie);
+  const store = await createStore(testFranchise.id, adminUserCookie);
 
   expect(store).toMatchObject(store);
 });
 
 test('delete store', async () => {
-  const franchise = await createFranchise(adminUser, adminUserCookie);
-  const store = await createStore(franchise.id, adminUserCookie);
-  const { status, body: deleteStoreRes } = await request(app).delete(`/api/franchise/${franchise.id}/store/${store.id}`).set('Cookie', adminUserCookie);
+  const store = await createStore(testFranchise.id, adminUserCookie);
+  const { status, body: deleteStoreRes } = await request(app).delete(`/api/franchise/${testFranchise.id}/store/${store.id}`).set('Cookie', adminUserCookie);
   expect(status).toBe(200);
 
   expect(deleteStoreRes.message).toMatch('store deleted');
-  expect(await getStore(franchise.id, store.id, adminUser, adminUserCookie)).toBeUndefined();
+  expect(await getStore(testFranchise.id, store.id, adminUser, adminUserCookie)).toBeUndefined();
 });
 
 test('delete franchise', async () => {

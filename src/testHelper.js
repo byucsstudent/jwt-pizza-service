@@ -30,6 +30,7 @@ async function createDinerUser() {
   user.email = user.name + '@diner.com';
   const registerRes = await request(app).post('/api/auth').send(user);
   const userCookie = registerRes.headers['set-cookie'];
+  user = { ...registerRes.body, password: 'a' };
 
   return [user, userCookie];
 }
