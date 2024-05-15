@@ -34,7 +34,7 @@ jobs:
       #   run: npm run lint
 
       - name: P1
-        run: ls -la && cat src/config.js
+        run: ls -la
 
       - name: Write config file
         run: |
