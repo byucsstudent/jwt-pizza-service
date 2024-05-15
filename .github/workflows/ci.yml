@@ -37,23 +37,24 @@ jobs:
         run: ls -la && cat src/config.js
 
       - name: Write config file
-        run: echo "module.exports = {
-        jwtSecret: '908f908dsvjdfnjoidfabv0j9few09gfdesjibdfsnkml',
-        db: {
-          connection: {
-            host: '127.0.0.1',
-            user: 'root',
-            password: 'monkeypie',
-            database: 'pizza',
-            connectTimeout: 60000,
-          },
-          listPerPage: 10,
-        },
-        factory: {
-          url: 'https://jwt-pizza-factory.cs329.click',
-          apiKey: '123456',
-        },
-      };" > src/config.js
+        run: |
+          echo "module.exports = {
+            jwtSecret: '908f908dsvjdfnjoidfabv0j9few09gfdesjibdfsnkml',
+            db: {
+              connection: {
+                host: '127.0.0.1',
+                user: 'root',
+                password: 'monkeypie',
+                database: 'pizza',
+                connectTimeout: 60000,
+              },
+              listPerPage: 10,
+            },
+            factory: {
+              url: 'https://jwt-pizza-factory.cs329.click',
+              apiKey: '123456',
+            },
+          };" > src/config.js
 
       - name: p2
         run: ls -la && cat src/config.js
