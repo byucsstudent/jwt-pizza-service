@@ -1,7 +1,6 @@
 const request = require('supertest');
 const app = require('../service');
 const { Role, DB } = require('../database/database.js');
-const { get } = require('http');
 
 if (process.env.VSCODE_INSPECTOR_OPTIONS) {
   jest.setTimeout(60 * 1000 * 5); // 5 minutes
@@ -9,8 +8,6 @@ if (process.env.VSCODE_INSPECTOR_OPTIONS) {
 
 let adminUser = { password: 'a', roles: [{ role: Role.Admin }] };
 let adminUserCookie;
-const testUser = { name: 'pizza diner', password: 'a' };
-let testUserCookie;
 
 function randomName() {
   return Math.random().toString(36).substring(2, 12);
@@ -25,12 +22,6 @@ beforeAll(async () => {
 
   const registerRes = await request(app).put('/api/auth').send(adminUser);
   adminUserCookie = registerRes.headers['set-cookie'];
-});
-
-beforeAll(async () => {
-  testUser.email = randomName() + '@diner.com';
-  const registerRes = await request(app).post('/api/auth').send(testUser);
-  testUserCookie = registerRes.headers['set-cookie'];
 });
 
 test('get franchise', async () => {
@@ -75,6 +66,7 @@ test('delete franchise', async () => {
   expect(status).toBe(200);
 
   expect(deleteFranchiseRes.message).toMatch('franchise deleted');
+  expect(await getStore(franchise.id, store.id, adminUser, adminUserCookie)).toBeUndefined();
   expect(await getFranchise(franchise.id, adminUser, adminUserCookie)).toBeUndefined();
 });
 
