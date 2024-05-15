@@ -2,7 +2,8 @@
   "collectCoverage": true,
   "coverageReporters": [
     "json-summary",
-    "text"
+    "text",
+    "text-summary"
   ],
   "coverageThreshold": {
     "global": {
