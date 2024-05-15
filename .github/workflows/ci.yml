@@ -33,6 +33,9 @@ jobs:
       # - name: Lint
       #   run: npm run lint
 
+      - name: P1
+        run: ls -la && cat src/config.js
+
       - name: Write config file
         run: echo "module.exports = {
         jwtSecret: '908f908dsvjdfnjoidfabv0j9few09gfdesjibdfsnkml',
@@ -52,7 +55,7 @@ jobs:
         },
       };" > src/config.js
 
-      - name: Test
+      - name: p2
         run: ls -la && cat src/config.js
     # - name: Test
     #     run: npm test
