@@ -65,11 +65,7 @@ jobs:
         run: |
           printf '{"version": "%s" }' $(date +'%Y%m%d.%H%M%S') > version.json
           coverage_pct=$(grep -o '"pct":[0-9.]*' coverage/coverage-summary.json | head -n 1 | cut -d ':' -f 2)
-          if (( $(echo "$coverage_pct < 80" | bc -l) )); then
-          color="yellow"
-          else
-          color="green"
-          fi
+          color=$(echo "$coverage_pct < 80" | bc -l | awk '{if ($1) print "yellow"; else print "green"}')
           sed -i "s/^Coverage: .*/Coverage: $coverage_pct %/" README.md
           curl https://img.shields.io/badge/Coverage-$coverage_pct%25-$color -o coverageBadge.svg
           git config user.name github-actions
