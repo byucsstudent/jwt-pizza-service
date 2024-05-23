@@ -6,7 +6,7 @@ const { Role } = require('../model/model.js');
 
 class DB {
   constructor() {
-    this.initialized = this.initializeDatabase();
+    //    this.initialized = this.initializeDatabase();
   }
 
   async getMenu() {
