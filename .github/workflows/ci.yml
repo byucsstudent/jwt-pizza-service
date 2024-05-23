@@ -97,12 +97,12 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           audience: sts.amazonaws.com
-          aws-region: us-east-1
+          aws-region: us-east-2
           role-to-assume: arn:aws:iam::464152414144:role/github-ci
 
       - name: Login to Amazon ECR
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+        uses: aws-actions/amazon-ecr-login@v2
 
       - name: Download pages artifact
         uses: actions/download-artifact@v4
