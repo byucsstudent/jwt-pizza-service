@@ -110,7 +110,7 @@ jobs:
           docker --version
           cd dist
           ls -la
-          docker buildx build --platform=linux/arm64 -t $service .
+          docker buildx build --platform=linux/arm64 -t jwt-pizza-service .
           docker images -a
 
       # - name: Push to AWS S3
