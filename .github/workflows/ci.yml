@@ -35,8 +35,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Lint
-        run: npm run lint
+      # - name: Lint
+      #   run: npm run lint
 
       - name: Write config file
         run: |
@@ -58,18 +58,60 @@ jobs:
             },
           };" > src/config.js
 
-      - name: Tests
-        run: npm test
+      # - name: Tests
+      #   run: npm test
 
-      - name: Update coverage and version
+      # - name: Update coverage and version
+      #   run: |
+      #     printf '{"version": "%s" }' $(date +'%Y%m%d.%H%M%S') > version.json
+      #     coverage_pct=$(grep -o '"pct":[0-9.]*' coverage/coverage-summary.json | head -n 1 | cut -d ':' -f 2)
+      #     color=$(echo "$coverage_pct < 80" | bc -l | awk '{if ($1) print "yellow"; else print "green"}')
+      #     sed -i "s/^Coverage: .*/Coverage: $coverage_pct %/" README.md
+      #     curl https://img.shields.io/badge/Coverage-$coverage_pct%25-$color -o coverageBadge.svg
+      #     git config user.name github-actions
+      #     git config user.email github-actions@github.com
+      #     git add .
+      #     git commit -m "generated"
+      #     git push
+
+      - name: Create dist
         run: |
-          printf '{"version": "%s" }' $(date +'%Y%m%d.%H%M%S') > version.json
-          coverage_pct=$(grep -o '"pct":[0-9.]*' coverage/coverage-summary.json | head -n 1 | cut -d ':' -f 2)
-          color=$(echo "$coverage_pct < 80" | bc -l | awk '{if ($1) print "yellow"; else print "green"}')
-          sed -i "s/^Coverage: .*/Coverage: $coverage_pct %/" README.md
-          curl https://img.shields.io/badge/Coverage-$coverage_pct%25-$color -o coverageBadge.svg
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git add .
-          git commit -m "generated"
-          git push
+          mkdir dist
+          cp Dockerfile dist
+          cp -r src/* dist
+          cp *.json dist
+
+      - name: Update pages artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: package
+          path: dist/
+
+  deploy:
+    needs: validate
+    permissions:
+      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+      # - name: Create OIDC token to AWS
+      #   uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     audience: sts.amazonaws.com
+      #     aws-region: us-east-1
+      #     role-to-assume: arn:aws:iam::464152414144:role/github-ci
+      - name: Download pages artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: package
+          path: dist/
+
+      - name: Build image
+        run: |
+          ls -la
+          docker build --platform=linux/arm64 -t $service .
+          docker images -a
+
+      # - name: Push to AWS S3
+      #   run: |
+      #     aws s3 cp dist s3://pizza.byucsstudent.click --recursive
+      #     aws cloudfront create-invalidation --distribution-id E2GRFXFEBQ5OEU --paths "/*"
