@@ -107,6 +107,7 @@ jobs:
 
       - name: Build image
         run: |
+          cd dist
           ls -la
           docker build --platform=linux/arm64 -t $service .
           docker images -a
