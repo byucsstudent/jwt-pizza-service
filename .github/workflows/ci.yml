@@ -104,7 +104,7 @@ jobs:
     steps:
       - name: show version
         run: |
-          echo "version=$env.version"
+          echo "version=$version"
       # - name: Create OIDC token to AWS
       #   uses: aws-actions/configure-aws-credentials@v4
       #   with:
