@@ -9,7 +9,25 @@ jobs:
   validate:
     name: Test and analyze
     runs-on: ubuntu-latest
+    # services:
+    #   mysql:
+    #     image: mysql:8.0.29
+    #     env:
+    #       MYSQL_ROOT_PASSWORD: ${{ secrets.DB_PASSWORD }}
+    #       MYSQL_DATABASE: pizza
+    #     ports:
+    #       - '3306:3306'
+    #     options: >-
+    #       --health-cmd "mysqladmin ping -p${{ secrets.DB_PASSWORD }}"
+    #       --health-interval 10s
+    #       --health-start-period 10s
+    #       --health-timeout 5s
+    #       --health-retries 10
     steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      # - name: Setup Node
       #   uses: actions/setup-node@v4
       #   with:
       #     node-version: '20.x'
@@ -20,41 +38,41 @@ jobs:
       # - name: Lint
       #   run: npm run lint
 
-      # - name: Write config file
-      #   run: |
-      #     echo "module.exports = {
-      #       jwtSecret: '${{ secrets.JWT_SECRET }}',
-      #       db: {
-      #         connection: {
-      #           host: '127.0.0.1',
-      #           user: 'root',
-      #           password: '${{ secrets.DB_PASSWORD }}',
-      #           database: 'pizza',
-      #           connectTimeout: 60000,
-      #         },
-      #         listPerPage: 10,
-      #       },
-      #       factory: {
-      #         url: 'https://jwt-pizza-factory.cs329.click',
-      #         apiKey: '${{ secrets.FACTORY_API_KEY }}',
-      #       },
-      #     };" > src/config.js
+      - name: Write config file
+        run: |
+          echo "module.exports = {
+            jwtSecret: '${{ secrets.JWT_SECRET }}',
+            db: {
+              connection: {
+                host: '127.0.0.1',
+                user: 'root',
+                password: '${{ secrets.DB_PASSWORD }}',
+                database: 'pizza',
+                connectTimeout: 60000,
+              },
+              listPerPage: 10,
+            },
+            factory: {
+              url: 'https://jwt-pizza-factory.cs329.click',
+              apiKey: '${{ secrets.FACTORY_API_KEY }}',
+            },
+          };" > src/config.js
 
       # - name: Tests
       #   run: npm test
 
-      - name: Update coverage and version
-        run: |
-          printf '{"version": "%s" }' $(date +'%Y%m%d.%H%M%S') > version.json
-          coverage_pct=$(grep -o '"pct":[0-9.]*' coverage/coverage-summary.json | head -n 1 | cut -d ':' -f 2)
-          color=$(echo "$coverage_pct < 80" | bc -l | awk '{if ($1) print "yellow"; else print "green"}')
-          sed -i "s/^Coverage: .*/Coverage: $coverage_pct %/" README.md
-          curl https://img.shields.io/badge/Coverage-$coverage_pct%25-$color -o coverageBadge.svg
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git add .
-          git commit -m "generated"
-          git push
+      # - name: Update coverage and version
+      #   run: |
+      #     printf '{"version": "%s" }' $(date +'%Y%m%d.%H%M%S') > version.json
+      #     coverage_pct=$(grep -o '"pct":[0-9.]*' coverage/coverage-summary.json | head -n 1 | cut -d ':' -f 2)
+      #     color=$(echo "$coverage_pct < 80" | bc -l | awk '{if ($1) print "yellow"; else print "green"}')
+      #     sed -i "s/^Coverage: .*/Coverage: $coverage_pct %/" README.md
+      #     curl https://img.shields.io/badge/Coverage-$coverage_pct%25-$color -o coverageBadge.svg
+      #     git config user.name github-actions
+      #     git config user.email github-actions@github.com
+      #     git add .
+      #     git commit -m "generated"
+      #     git push
 
       - name: Create dist
         run: |
@@ -70,10 +88,10 @@ jobs:
           path: dist/
 
   deploy:
-    needs: [validate]
-    runs-on: ubuntu-latest
+    needs: validate
     permissions:
       id-token: write
+    runs-on: ubuntu-latest
     steps:
       - name: Create OIDC token to AWS
         uses: aws-actions/configure-aws-credentials@v4
@@ -90,6 +108,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: package
+          path: dist/
 
       - name: Set up machine emulation
         uses: docker/setup-qemu-action@v3
@@ -105,27 +124,28 @@ jobs:
           IMAGE_TAG: 'latest'
         run: |
           docker --version
+          cd dist
           ls -la
           docker build --platform=linux/arm64 -t $ECR_REGISTRY/$ECR_REPOSITORY --push .
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
-  # - name: Download task definition
-  #   run: |
-  #     aws ecs describe-task-definition --region us-east-2 --task-definition jwt-pizza-service --query taskDefinition > task-definition.json
+      # - name: Download task definition
+      #   run: |
+      #     aws ecs describe-task-definition --region us-east-2 --task-definition jwt-pizza-service --query taskDefinition > task-definition.json
 
-  # - name: Fill in the new image ID in the Amazon ECS task definition
-  #   id: task-def
-  #   uses: aws-actions/amazon-ecs-render-task-definition@v1
-  #   with:
-  #     task-definition: task-definition.json
-  #     container-name: jwt-pizza-service
-  #     image: ${{ steps.build-image.outputs.image }}
+      # - name: Fill in the new image ID in the Amazon ECS task definition
+      #   id: task-def
+      #   uses: aws-actions/amazon-ecs-render-task-definition@v1
+      #   with:
+      #     task-definition: task-definition.json
+      #     container-name: jwt-pizza-service
+      #     image: ${{ steps.build-image.outputs.image }}
 
-  # - name: Deploy Amazon ECS task definition
-  #   uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-  #   with:
-  #     task-definition: ${{ steps.task-def.outputs.task-definition }}
-  #     service: jwt-pizza-service-albtest
-  #     cluster: jwt-pizza-service
-  #     wait-for-service-stability: true
+      # - name: Deploy Amazon ECS task definition
+      #   uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+      #   with:
+      #     task-definition: ${{ steps.task-def.outputs.task-definition }}
+      #     service: jwt-pizza-service-albtest
+      #     cluster: jwt-pizza-service
+      #     wait-for-service-stability: true
