@@ -108,7 +108,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: package
-          path: dist/
 
       - name: Set up machine emulation
         uses: docker/setup-qemu-action@v3
@@ -122,7 +121,6 @@ jobs:
           ECR_REPOSITORY: 'jwt-pizza-service'
         run: |
           docker --version
-          cd dist
           ls -la
           docker build --platform=linux/arm64 -t $ECR_REGISTRY/$ECR_REPOSITORY --push .
 
