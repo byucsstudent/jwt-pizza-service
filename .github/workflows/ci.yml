@@ -6,7 +6,7 @@ on:
       - main
 
 env:
-  VERSION: ${{ github.run_number }}
+  VERSION: $(date +'%Y%m%d.%H%M%S')
 
 jobs:
   validate:
