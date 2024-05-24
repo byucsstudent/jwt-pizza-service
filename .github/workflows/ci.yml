@@ -5,18 +5,11 @@ on:
     branches:
       - main
 
-env:
-  VERSION: $(date +'%Y%m%d.%H%M%S')
-
 jobs:
   validate:
     name: Test and analyze
     runs-on: ubuntu-latest
     steps:
-      - name: test version
-        run: |
-          echo $VERSION
-
       #   uses: actions/setup-node@v4
       #   with:
       #     node-version: '20.x'
@@ -50,76 +43,72 @@ jobs:
       # - name: Tests
       #   run: npm test
 
-      # - name: Update coverage and version
-      #   run: |
-      #     printf '{"version": "%s" }' $(date +'%Y%m%d.%H%M%S') > version.json
-      #     coverage_pct=$(grep -o '"pct":[0-9.]*' coverage/coverage-summary.json | head -n 1 | cut -d ':' -f 2)
-      #     color=$(echo "$coverage_pct < 80" | bc -l | awk '{if ($1) print "yellow"; else print "green"}')
-      #     sed -i "s/^Coverage: .*/Coverage: $coverage_pct %/" README.md
-      #     curl https://img.shields.io/badge/Coverage-$coverage_pct%25-$color -o coverageBadge.svg
-      #     git config user.name github-actions
-      #     git config user.email github-actions@github.com
-      #     git add .
-      #     git commit -m "generated"
-      #     git push
+      - name: Update coverage and version
+        run: |
+          printf '{"version": "%s" }' $(date +'%Y%m%d.%H%M%S') > version.json
+          coverage_pct=$(grep -o '"pct":[0-9.]*' coverage/coverage-summary.json | head -n 1 | cut -d ':' -f 2)
+          color=$(echo "$coverage_pct < 80" | bc -l | awk '{if ($1) print "yellow"; else print "green"}')
+          sed -i "s/^Coverage: .*/Coverage: $coverage_pct %/" README.md
+          curl https://img.shields.io/badge/Coverage-$coverage_pct%25-$color -o coverageBadge.svg
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add .
+          git commit -m "generated"
+          git push
 
-  #     - name: Create dist
-  #       run: |
-  #         mkdir dist
-  #         cp Dockerfile dist
-  #         cp -r src/* dist
-  #         cp *.json dist
+      - name: Create dist
+        run: |
+          mkdir dist
+          cp Dockerfile dist
+          cp -r src/* dist
+          cp *.json dist
 
-  #     - name: Update distribution artifact
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: package
-  #         path: dist/
+      - name: Update distribution artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: package
+          path: dist/
 
   deploy:
     needs: [validate]
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
     steps:
-      - name: test version
+      - name: Create OIDC token to AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          audience: sts.amazonaws.com
+          aws-region: us-east-2
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT }}:role/${{ secrets.CI_IAM_ROLE }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Download distribution artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: package
+
+      - name: Set up machine emulation
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker build
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push container image
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: 'jwt-pizza-service'
+          IMAGE_TAG: 'latest'
         run: |
-          echo ${{ env.VERSION }}
-  #   permissions:
-  #     id-token: write
-  #   steps:
-  #     - name: Create OIDC token to AWS
-  #       uses: aws-actions/configure-aws-credentials@v4
-  #       with:
-  #         audience: sts.amazonaws.com
-  #         aws-region: us-east-2
-  #         role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT }}:role/${{ secrets.CI_IAM_ROLE }}
-
-  #     - name: Login to Amazon ECR
-  #       id: login-ecr
-  #       uses: aws-actions/amazon-ecr-login@v2
-
-  #     - name: Download distribution artifact
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: package
-
-  #     - name: Set up machine emulation
-  #       uses: docker/setup-qemu-action@v3
-
-  #     - name: Set up Docker build
-  #       uses: docker/setup-buildx-action@v3
-
-  #     - name: Build and push container image
-  #       id: build-image
-  #       env:
-  #         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-  #         ECR_REPOSITORY: 'jwt-pizza-service'
-  #         IMAGE_TAG: ${{ env.VERSION }}
-  #       run: |
-  #         docker --version
-  #         ls -la
-  #         docker build --platform=linux/arm64 -t $ECR_REGISTRY/$ECR_REPOSITORY --push .
-  #         echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
-  #         echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          docker --version
+          ls -la
+          docker build --platform=linux/arm64 -t $ECR_REGISTRY/$ECR_REPOSITORY --push .
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
   # - name: Download task definition
   #   run: |
