@@ -102,6 +102,10 @@ jobs:
     env:
       version: ${{needs.validate.outputs.version}}
     steps:
+      - name: show version
+        run: |
+          echo "version=$version"
+
       - name: Create OIDC token to AWS
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -129,12 +133,11 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: 'jwt-pizza-service'
-          IMAGE_TAG: $version
         run: |
-          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$version"
           ls -la
           docker build --platform=linux/arm64 -t $ECR_REGISTRY/$ECR_REPOSITORY --push .
-          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$version" >> $GITHUB_OUTPUT
 
       - name: Download task definition
         run: |
