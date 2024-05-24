@@ -51,8 +51,8 @@ jobs:
             jwtSecret: '${{ secrets.JWT_SECRET }}',
             db: {
               connection: {
-                host: '127.0.0.1',
-                user: 'root',
+                host: '${{ secrets.DB_HOSTNAME }}',
+                user: '${{ secrets.DB_USERNAME }}',
                 password: '${{ secrets.DB_PASSWORD }}',
                 database: 'pizza',
                 connectTimeout: 60000,
@@ -65,21 +65,21 @@ jobs:
             },
           };" > src/config.js
 
-      # - name: Tests
-      #   run: npm test
+      - name: Tests
+        run: npm test
 
       - name: Update coverage and version
         run: |
           printf '{"version": "%s" }' ${{steps.set_version.outputs.version}} > version.json
-      #     coverage_pct=$(grep -o '"pct":[0-9.]*' coverage/coverage-summary.json | head -n 1 | cut -d ':' -f 2)
-      #     color=$(echo "$coverage_pct < 80" | bc -l | awk '{if ($1) print "yellow"; else print "green"}')
-      #     sed -i "s/^Coverage: .*/Coverage: $coverage_pct %/" README.md
-      #     curl https://img.shields.io/badge/Coverage-$coverage_pct%25-$color -o coverageBadge.svg
-      #     git config user.name github-actions
-      #     git config user.email github-actions@github.com
-      #     git add .
-      #     git commit -m "generated"
-      #     git push
+          coverage_pct=$(grep -o '"pct":[0-9.]*' coverage/coverage-summary.json | head -n 1 | cut -d ':' -f 2)
+          color=$(echo "$coverage_pct < 80" | bc -l | awk '{if ($1) print "yellow"; else print "green"}')
+          sed -i "s/^Coverage: .*/Coverage: $coverage_pct %/" README.md
+          curl https://img.shields.io/badge/Coverage-$coverage_pct%25-$color -o coverageBadge.svg
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add .
+          git commit -m "generated"
+          git push
 
       - name: Create dist
         run: |
@@ -87,6 +87,10 @@ jobs:
           cp Dockerfile dist
           cp -r src/* dist
           cp *.json dist
+          sed -i "s/${{ secrets.DB_USERNAME }}/${{ secrets.DB_PROD_USERNAME }}/g" dist/config.js
+          sed -i "s/${{ secrets.DB_PASSWORD }}/${{ secrets.DB_PROD_PASSWORD }}/g" dist/config.js
+          sed -i "s/${{ secrets.DB_HOSTNAME }}/${{ secrets.DB_PROD_HOSTNAME }}/g" dist/config.js
+          cat dist/config.js
 
       - name: Update distribution artifact
         uses: actions/upload-artifact@v4
