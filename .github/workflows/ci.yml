@@ -4,30 +4,13 @@ on:
   push:
     branches:
       - main
-
+env:
+  VERSION: $(date +'%Y%m%d.%H%M%S')
 jobs:
   validate:
     name: Test and analyze
     runs-on: ubuntu-latest
-    # services:
-    #   mysql:
-    #     image: mysql:8.0.29
-    #     env:
-    #       MYSQL_ROOT_PASSWORD: ${{ secrets.DB_PASSWORD }}
-    #       MYSQL_DATABASE: pizza
-    #     ports:
-    #       - '3306:3306'
-    #     options: >-
-    #       --health-cmd "mysqladmin ping -p${{ secrets.DB_PASSWORD }}"
-    #       --health-interval 10s
-    #       --health-start-period 10s
-    #       --health-timeout 5s
-    #       --health-retries 10
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      # - name: Setup Node
       #   uses: actions/setup-node@v4
       #   with:
       #     node-version: '20.x'
@@ -40,6 +23,7 @@ jobs:
 
       - name: Write config file
         run: |
+          echo ${{ env.VERSION }}
           echo "module.exports = {
             jwtSecret: '${{ secrets.JWT_SECRET }}',
             db: {
@@ -74,77 +58,76 @@ jobs:
       #     git commit -m "generated"
       #     git push
 
-      - name: Create dist
-        run: |
-          mkdir dist
-          cp Dockerfile dist
-          cp -r src/* dist
-          cp *.json dist
+  #     - name: Create dist
+  #       run: |
+  #         mkdir dist
+  #         cp Dockerfile dist
+  #         cp -r src/* dist
+  #         cp *.json dist
 
-      - name: Update distribution artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: package
-          path: dist/
+  #     - name: Update distribution artifact
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: package
+  #         path: dist/
 
-  deploy:
-    needs: validate
-    permissions:
-      id-token: write
-    runs-on: ubuntu-latest
-    steps:
-      - name: Create OIDC token to AWS
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          audience: sts.amazonaws.com
-          aws-region: us-east-2
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT }}:role/${{ secrets.CI_IAM_ROLE }}
+  # deploy:
+  #   needs: validate
+  #   permissions:
+  #     id-token: write
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Create OIDC token to AWS
+  #       uses: aws-actions/configure-aws-credentials@v4
+  #       with:
+  #         audience: sts.amazonaws.com
+  #         aws-region: us-east-2
+  #         role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT }}:role/${{ secrets.CI_IAM_ROLE }}
 
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
+  #     - name: Login to Amazon ECR
+  #       id: login-ecr
+  #       uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Download distribution artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: package
-          path: dist/
+  #     - name: Download distribution artifact
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: package
 
-      - name: Set up machine emulation
-        uses: docker/setup-qemu-action@v3
+  #     - name: Set up machine emulation
+  #       uses: docker/setup-qemu-action@v3
 
-      - name: Set up Docker build
-        uses: docker/setup-buildx-action@v3
+  #     - name: Set up Docker build
+  #       uses: docker/setup-buildx-action@v3
 
-      - name: Build and push container image
-        id: build-image
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: 'jwt-pizza-service'
-        run: |
-          docker --version
-          cd dist
-          ls -la
-          docker build --platform=linux/arm64 -t $ECR_REGISTRY/$ECR_REPOSITORY --push .
-          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
-          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+  #     - name: Build and push container image
+  #       id: build-image
+  #       env:
+  #         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+  #         ECR_REPOSITORY: 'jwt-pizza-service'
+  #         IMAGE_TAG: ${{ env.VERSION }}
+  #       run: |
+  #         docker --version
+  #         ls -la
+  #         docker build --platform=linux/arm64 -t $ECR_REGISTRY/$ECR_REPOSITORY --push .
+  #         echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+  #         echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
-      # - name: Download task definition
-      #   run: |
-      #     aws ecs describe-task-definition --region us-east-2 --task-definition jwt-pizza-service --query taskDefinition > task-definition.json
+  # - name: Download task definition
+  #   run: |
+  #     aws ecs describe-task-definition --region us-east-2 --task-definition jwt-pizza-service --query taskDefinition > task-definition.json
 
-      # - name: Fill in the new image ID in the Amazon ECS task definition
-      #   id: task-def
-      #   uses: aws-actions/amazon-ecs-render-task-definition@v1
-      #   with:
-      #     task-definition: task-definition.json
-      #     container-name: jwt-pizza-service
-      #     image: ${{ steps.build-image.outputs.image }}
+  # - name: Fill in the new image ID in the Amazon ECS task definition
+  #   id: task-def
+  #   uses: aws-actions/amazon-ecs-render-task-definition@v1
+  #   with:
+  #     task-definition: task-definition.json
+  #     container-name: jwt-pizza-service
+  #     image: ${{ steps.build-image.outputs.image }}
 
-      # - name: Deploy Amazon ECS task definition
-      #   uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-      #   with:
-      #     task-definition: ${{ steps.task-def.outputs.task-definition }}
-      #     service: jwt-pizza-service-albtest
-      #     cluster: jwt-pizza-service
-      #     wait-for-service-stability: true
+  # - name: Deploy Amazon ECS task definition
+  #   uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+  #   with:
+  #     task-definition: ${{ steps.task-def.outputs.task-definition }}
+  #     service: jwt-pizza-service-albtest
+  #     cluster: jwt-pizza-service
+  #     wait-for-service-stability: true
