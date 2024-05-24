@@ -40,7 +40,7 @@ jobs:
           node-version: '20.x'
 
       - name: Install dependencies
-        run: npm CI
+        run: npm ci
 
       - name: Lint
         run: npm run lint
