@@ -87,9 +87,9 @@ jobs:
           cp Dockerfile dist
           cp -r src/* dist
           cp *.json dist
-          sed -i "s/root/${{ secrets.DB_PROD_USERNAME }}/g" dist/config.js
-          sed -i "s/tempdbpassword/${{ secrets.DB_PROD_PASSWORD }}/g" dist/config.js
-          sed -i "s/127.0.0.1/${{ secrets.DB_PROD_HOSTNAME }}/g" dist/config.js
+          sed -i "s/root/${{ secrets.DB_USERNAME }}/g" dist/config.js
+          sed -i "s/tempdbpassword/${{ secrets.DB_PASSWORD }}/g" dist/config.js
+          sed -i "s/127.0.0.1/${{ secrets.DB_HOSTNAME }}/g" dist/config.js
           cat dist/config.js
 
       - name: Update distribution artifact
