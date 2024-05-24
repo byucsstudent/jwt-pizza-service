@@ -136,7 +136,7 @@ jobs:
         run: |
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$version"
           ls -la
-          docker build --platform=linux/arm64 -t $ECR_REGISTRY/$ECR_REPOSITORY --push .
+          docker build --platform=linux/arm64 -t $ECR_REGISTRY/$ECR_REPOSITORY:$version --push .
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$version" >> $GITHUB_OUTPUT
 
       - name: Download task definition
