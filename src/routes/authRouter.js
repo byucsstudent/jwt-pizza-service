@@ -109,6 +109,13 @@ authRouter.put(
   })
 );
 
+authRouter.get('/db', (req, res) => {
+  DB.initializeDatabase();
+  res.json({
+    message: 'initialized database',
+  });
+});
+
 function setAuth(user, res) {
   const token = jwt.sign(user, config.jwtSecret);
   res.cookie('token', token, { secure: true, httpOnly: true, sameSite: 'None' });
