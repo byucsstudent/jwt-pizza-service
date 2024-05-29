@@ -33,7 +33,7 @@ cp *.json dist
 printf "\n----> Building container\n"
 pushd dist
 printf '{"version": "%s" }' $(date +'%Y%m%d.%H%M%S') > version.json
-printf "module.exports={jwtSecret:'${jwtAuthSecret}',db:{connection:{host:'${hostname}',user:'root',password:'monkeypie',database:'pizza',connectTimeout:60000}},factory:{url:'https://jwt-pizza-factory.cs329.click', apiKey:'${factoryApiKey}'}};" > config.json
+printf "module.exports={jwtSecret:'${jwtAuthSecret}',db:{connection:{host:'${hostname}',user:'root',password:'monkeypie',database:'pizza',connectTimeout:60000}},factory:{url:'https://pizza-factory.cs329.click', apiKey:'${factoryApiKey}'}};" > config.json
 docker build --platform=linux/arm64 -t $service .
 popd
 
