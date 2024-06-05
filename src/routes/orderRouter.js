@@ -3,6 +3,7 @@ const config = require('../config.js');
 const { Role, DB } = require('../database/database.js');
 const { authRouter } = require('./authRouter.js');
 const { asyncHandler, StatusCodeError } = require('../endpointHelper.js');
+const metrics = require('../metrics');
 
 const orderRouter = express.Router();
 
@@ -86,6 +87,7 @@ orderRouter.post(
     });
     const j = await r.json();
     if (r.ok) {
+      metrics.orderEvent(order);
       res.send({ order, jwt: j.jwt });
     } else {
       throw new StatusCodeError(`Failed to fulfill order at factory. ${JSON.stringify(j)}`, 500);
