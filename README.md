@@ -24,7 +24,7 @@ export default {
     listPerPage: 10,
   },
   factory: {
-    url: 'https://jwt-pizza-factory.cs329.click',
+    url: 'https://pizza-factory.cs329.click',
     apiKey: 'your-factory-issued-api-key-here',
   },
 };
@@ -43,7 +43,7 @@ curl localhost:3000/api/docs
 Install the required packages.
 
 ```sh
-npm install express cookie-parser jsonwebtoken mysql2 bcrypt
+npm install express jsonwebtoken mysql2 bcrypt
 ```
 
 Nodemon is assumed to be installed globally so that you can have hot reloading when debugging.
