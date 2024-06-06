@@ -19,9 +19,7 @@ async function createAdminUser() {
   user = { ...user, id: addRes.id, password: 'a' };
 
   const registerRes = await request(app).put('/api/auth').send(user);
-  const userCookie = registerRes.headers['set-cookie'];
-
-  return [user, userCookie];
+  return [user, registerRes.body.token];
 }
 
 async function createDinerUser() {
@@ -29,10 +27,9 @@ async function createDinerUser() {
   user.name = randomName();
   user.email = user.name + '@diner.com';
   const registerRes = await request(app).post('/api/auth').send(user);
-  const userCookie = registerRes.headers['set-cookie'];
-  user = { ...registerRes.body, password: 'a' };
+  user = { ...registerRes.body.user, password: 'a' };
 
-  return [user, userCookie];
+  return [user, registerRes.body.token];
 }
 
 module.exports = { randomName, createAdminUser, createDinerUser };

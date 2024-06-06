@@ -12,7 +12,7 @@ test('register', async () => {
   const registerRes = await request(app).post('/api/auth').send({ name: 'new', email: 'new@test.com', password: 'a' });
   expect(registerRes.status).toBe(200);
 
-  expect(registerRes.body).toMatchObject({ email: 'new@test.com', name: 'new', roles: [{ role: 'diner' }] });
+  expect(registerRes.body.user).toMatchObject({ email: 'new@test.com', name: 'new', roles: [{ role: 'diner' }] });
 });
 
 test('register bad params', async () => {
@@ -28,22 +28,19 @@ test('register bad params', async () => {
 
 test('login', async () => {
   const loginRes = await request(app).put('/api/auth').send(testUser);
-
   expect(loginRes.status).toBe(200);
-
-  const cookies = loginRes.headers['set-cookie'];
-  expect(cookies[0]).toMatch(/token=.+; Path=\/; HttpOnly; Secure; SameSite=None/);
+  expect(loginRes.body.token).toMatch(/^[a-zA-Z0-9\-_]*\.[a-zA-Z0-9\-_]*\.[a-zA-Z0-9\-_]*$/);
 
   const user = { ...testUser, roles: [{ role: 'diner' }] };
   delete user.password;
-  expect(loginRes.body).toMatchObject(user);
+  expect(loginRes.body.user).toMatchObject(user);
 });
 
 test('logout', async () => {
   const registerRes = await request(app).post('/api/auth').send({ name: 'new', email: 'new@test.com', password: 'a' });
-  const cookie = registerRes.headers['set-cookie'];
+  const authToken = registerRes.body.token;
 
-  const logoutRes = await request(app).delete('/api/auth/').set('Cookie', cookie);
+  const logoutRes = await request(app).delete('/api/auth/').set('Authorization', `Bearer ${authToken}`);
   expect(logoutRes.status).toBe(200);
   expect(logoutRes.body).toMatchObject({ message: 'logout successful' });
 });
