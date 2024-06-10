@@ -4,7 +4,7 @@ const os = require('os');
 const USER_ID = config.metrics.userId;
 const API_KEY = config.metrics.apiKey;
 const SOURCE = config.metrics.source;
-const HOST = config.metrics.host;
+const URL = config.metrics.url;
 
 class Metrics {
   constructor() {
@@ -91,7 +91,7 @@ class Metrics {
   sendMetricToGrafana(metricPrefix, metricName, category, metricValue) {
     const metric = `${metricPrefix},source=${SOURCE},category=${category} ${metricName}=${metricValue}`;
 
-    fetch(`https://${HOST}/api/v1/push/influx/write`, {
+    fetch(`${URL}/api/v1/push/influx/write`, {
       method: 'post',
       body: metric,
       headers: { Authorization: `Bearer ${USER_ID}:${API_KEY}` },
