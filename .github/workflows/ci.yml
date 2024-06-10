@@ -67,7 +67,7 @@ jobs:
               source: 'jwt_pizza_service',
               userId: ${{ secrets.GRAFANA_USER_ID }},
               url: '${{ secrets.METRICS_URL }}',
-              apiKey: ${{ secrets.METRICS_API_KEY }},
+              apiKey: '${{ secrets.METRICS_API_KEY }}',
             },            
           };" > src/config.js
 
