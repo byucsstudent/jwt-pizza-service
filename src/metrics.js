@@ -13,7 +13,7 @@ class Metrics {
     this.authEvents = { success: 0, failure: 0 };
     this.activeUsers = new Map();
 
-    setInterval(() => {
+    const timer = setInterval(() => {
       const httpMetrics = () => {
         const totalRequests = Object.values(this.requests).reduce((acc, curr) => acc + curr, 0);
         this.sendMetricToGrafana('request', 'total', 'all', totalRequests);
@@ -53,6 +53,8 @@ class Metrics {
       purchaseMetrics();
       authMetrics();
     }, 10000);
+
+    timer.unref();
   }
 
   requestTracker = (req, res, next) => {
