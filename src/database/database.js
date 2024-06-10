@@ -4,6 +4,8 @@ const config = require('../config.js');
 const { StatusCodeError } = require('../endpointHelper.js');
 const { Role } = require('../model/model.js');
 const dbModel = require('./dbModel.js');
+const logger = require('../logger');
+
 class DB {
   constructor() {
     this.initialized = this.initializeDatabase();
@@ -79,7 +81,7 @@ class DB {
     const connection = await this.getConnection();
     try {
       const hashedPassword = await bcrypt.hash(password, 10);
-      await this.query(connection, `UPDATE user SET email=?, password=? WHERE id=?`, [email, hashedPassword, userId]);
+      await this.query(connection, `UPDATE user SET email=?, password=? WHERE id=?`, [email, hashedPassword, userId], [false, true, false]);
       return this.getUser(email, password);
     } finally {
       connection.end();
@@ -90,7 +92,7 @@ class DB {
     token = this.getTokenSignature(token);
     const connection = await this.getConnection();
     try {
-      await this.query(connection, `INSERT INTO auth (token, userId) VALUES (?, ?)`, [token, userId]);
+      await this.query(connection, `INSERT INTO auth (token, userId) VALUES (?, ?)`, [token, userId], [true, false]);
     } finally {
       connection.end();
     }
@@ -100,7 +102,7 @@ class DB {
     token = this.getTokenSignature(token);
     const connection = await this.getConnection();
     try {
-      const authResult = await this.query(connection, `SELECT userId FROM auth WHERE token=?`, [token]);
+      const authResult = await this.query(connection, `SELECT userId FROM auth WHERE token=?`, [token], [true]);
       return authResult.length > 0;
     } finally {
       connection.end();
@@ -111,7 +113,7 @@ class DB {
     token = this.getTokenSignature(token);
     const connection = await this.getConnection();
     try {
-      await this.query(connection, `DELETE FROM auth WHERE token=?`, [token]);
+      await this.query(connection, `DELETE FROM auth WHERE token=?`, [token], [true]);
     } finally {
       connection.end();
     }
@@ -274,8 +276,19 @@ class DB {
     return '';
   }
 
-  async query(connection, sql, params) {
+  async query(connection, sql, params, secureParams = []) {
     const [results] = await connection.execute(sql, params);
+
+    let i = 0;
+    const req = sql.replace(/\?/g, () => {
+      if (secureParams && secureParams[i]) {
+        i++;
+        return '*****';
+      }
+      return params[i++];
+    });
+    logger.log('info', 'db', { req: req });
+
     return results;
   }
 
