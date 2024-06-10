@@ -45,6 +45,17 @@ test('logout', async () => {
   expect(logoutRes.body).toMatchObject({ message: 'logout successful' });
 });
 
+test('change user', async () => {
+  let [user, userAuthToken] = await TestHelper.createDinerUser();
+
+  const body = { email: user.email, password: 'b' };
+
+  const updateRes = await request(app).put(`/api/auth/${user.id}`).set('Authorization', `Bearer ${userAuthToken}`).send(body);
+  expect(updateRes.status).toBe(200);
+  const loginRes = await request(app).put('/api/auth').send(body);
+  expect(loginRes.status).toBe(200);
+});
+
 test('auth bad token', async () => {
   const badCookie = ['token=garbage; Path=/; HttpOnly; Secure; SameSite=Strict'];
   const getOrdersRes = await request(app).get('/api/order/').set('Cookie', badCookie);
