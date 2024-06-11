@@ -8,6 +8,7 @@ const metrics = require('./metrics');
 const logger = require('./logger');
 
 const app = express();
+app.enable('trust proxy');
 app.use(express.json());
 app.use(setAuthUser);
 app.use(metrics.requestTracker);
