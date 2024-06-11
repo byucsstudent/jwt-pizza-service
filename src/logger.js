@@ -26,8 +26,6 @@ class Logger {
     const values = [this.nowString(), logData];
     const logEvent = { streams: [{ stream: labels, values: [values] }] };
 
-    console.log(JSON.stringify(logData), '\n');
-
     this.sendLogToGrafana(logEvent);
   }
 
@@ -50,25 +48,21 @@ class Logger {
   }
 
   sendLogToGrafana(event) {
-    try {
-      const body = JSON.stringify(event);
-      fetch(`${config.logging.url}`, {
-        method: 'post',
-        body: body,
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${config.logging.userId}:${config.logging.apiKey}`,
-        },
+    const body = JSON.stringify(event);
+    fetch(`${config.logging.url}`, {
+      method: 'post',
+      body: body,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${config.logging.userId}:${config.logging.apiKey}`,
+      },
+    })
+      .then((res) => {
+        if (!res.ok) console.log('Failed to send log to Grafana');
       })
-        .then((res) => {
-          if (!res.ok) console.log('Failed to send log to Grafana');
-        })
-        .catch((error) => {
-          console.error('Error pushing log:', error);
-        });
-    } catch (error) {
-      console.error('Error pushing log:', error);
-    }
+      .catch((error) => {
+        console.error('Error pushing logs:', error);
+      });
   }
 }
 module.exports = new Logger();
