@@ -278,7 +278,11 @@ class DB {
 
   async query(connection, sql, params, secureParams = []) {
     const [results] = await connection.execute(sql, params);
+    this.logQuery(sql, params, secureParams);
+    return results;
+  }
 
+  logQuery(sql, params, secureParams) {
     let i = 0;
     const req = sql.replace(/\?/g, () => {
       if (secureParams && secureParams[i]) {
@@ -288,8 +292,6 @@ class DB {
       return params[i++];
     });
     logger.log('info', 'db', { req: req });
-
-    return results;
   }
 
   async getID(connection, key, value, table) {
