@@ -11,11 +11,11 @@ class Metrics {
 
     const timer = setInterval(() => {
       const httpMetrics = () => {
-        this.sendMetricToGrafana('pizza_http_latency', 'val', this.requestLatency);
+        this.sendMetricToGrafana('pizza_http_latency', 'total', this.requestLatency);
         const totalRequests = Object.values(this.requests).reduce((acc, curr) => acc + curr, 0);
-        this.sendMetricToGrafana('pizza_http_request_all', 'val', totalRequests);
+        this.sendMetricToGrafana('pizza_http_request', 'all_total', totalRequests);
         Object.keys(this.requests).forEach((httpMethod) => {
-          this.sendMetricToGrafana(`pizza_http_request_${httpMethod}`, 'val', this.requests[httpMethod]);
+          this.sendMetricToGrafana(`pizza_http_request`, `${httpMethod}_total`, this.requests[httpMethod]);
         });
 
         this.requests = {};
@@ -54,7 +54,7 @@ class Metrics {
       userMetrics();
       purchaseMetrics();
       authMetrics();
-    }, 10000);
+    }, 1000);
 
     timer.unref();
   }
