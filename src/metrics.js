@@ -3,23 +3,28 @@ const os = require('os');
 
 class Metrics {
   constructor() {
+    this.requestLatency = 0;
     this.requests = {};
-    this.purchase = { count: 0, revenue: 0 };
+    this.purchase = { count: 0, revenue: 0, error: 0, latency: 0 };
     this.authEvents = { success: 0, failure: 0 };
     this.activeUsers = new Map();
 
     const timer = setInterval(() => {
       const httpMetrics = () => {
+        this.sendMetricToGrafana('pizza_http_latency', 'val', this.requestLatency);
         const totalRequests = Object.values(this.requests).reduce((acc, curr) => acc + curr, 0);
-        this.sendMetricToGrafana('request', 'total', 'all', totalRequests);
+        this.sendMetricToGrafana('pizza_http_request_all', 'val', totalRequests);
         Object.keys(this.requests).forEach((httpMethod) => {
-          this.sendMetricToGrafana('request', 'total', httpMethod, this.requests[httpMethod]);
+          this.sendMetricToGrafana(`pizza_http_request_${httpMethod}`, 'val', this.requests[httpMethod]);
         });
+
+        this.requests = {};
+        this.requestLatency = 0;
       };
 
       const systemMetrics = () => {
-        this.sendMetricToGrafana('system', 'cpu', 'used', this.getCpuUsagePercentage());
-        this.sendMetricToGrafana('system', 'memory', 'used', this.getMemoryUsagePercentage());
+        this.sendMetricToGrafana('pizza_system_cpu', 'percent', this.getCpuUsagePercentage());
+        this.sendMetricToGrafana('pizza_system_memory', 'used', this.getMemoryUsagePercentage());
       };
 
       const userMetrics = () => {
@@ -29,17 +34,19 @@ class Metrics {
             this.activeUsers.delete(key);
           }
         });
-        this.sendMetricToGrafana('user', 'count', 'total', this.activeUsers.size);
+        this.sendMetricToGrafana('pizza_user_count', 'total', this.activeUsers.size);
       };
 
       const purchaseMetrics = () => {
-        this.sendMetricToGrafana('purchase', 'bucket', 'count', this.purchase.count);
-        this.sendMetricToGrafana('purchase', 'bucket', 'revenue', this.purchase.revenue);
+        this.sendMetricToGrafana('pizza_purchase_count', 'total', this.purchase.count);
+        this.sendMetricToGrafana('pizza_purchase_revenue', 'total', this.purchase.revenue);
+        this.sendMetricToGrafana('pizza_purchase_latency', 'total', this.purchase.latency);
+        this.sendMetricToGrafana('pizza_purchase_error', 'total', this.purchase.error);
       };
 
       const authMetrics = () => {
-        this.sendMetricToGrafana('auth', 'bucket', 'success', this.authEvents.success);
-        this.sendMetricToGrafana('auth', 'bucket', 'failure', this.authEvents.failure);
+        this.sendMetricToGrafana('pizza_auth_success', 'total', this.authEvents.success);
+        this.sendMetricToGrafana('pizza_auth_failure', 'total', this.authEvents.failure);
       };
 
       httpMetrics();
@@ -56,11 +63,19 @@ class Metrics {
     const httpMethod = req.method.toLowerCase();
     this.requests[httpMethod] = (this.requests[httpMethod] || 0) + 1;
 
+    const dateNow = Date.now();
     if (req.user) {
       if (this.activeUsers.has(req.user.id)) {
-        this.activeUsers.get(req.user.id).last = Date.now();
+        this.activeUsers.get(req.user.id).last = dateNow;
       }
     }
+
+    let send = res.send;
+    res.send = (resBody) => {
+      this.requestLatency += Date.now() - dateNow;
+      res.send = send;
+      return res.send(resBody);
+    };
 
     next();
   };
@@ -72,9 +87,12 @@ class Metrics {
     }
   };
 
-  orderEvent = (order) => {
-    this.purchase.count += order.items.length;
-    this.purchase.revenue += order.items.reduce((acc, curr) => acc + curr.price, 0);
+  orderEvent = (orderEvent) => {
+    this.purchase.count += orderEvent.count;
+    this.purchase.revenue += orderEvent.revenue;
+    const latency = orderEvent.end - orderEvent.start;
+    this.purchase.latency += latency;
+    this.purchase.error += orderEvent.error ? 1 : 0;
   };
 
   readAuthToken(req) {
@@ -85,8 +103,9 @@ class Metrics {
     return null;
   }
 
-  sendMetricToGrafana(metricPrefix, metricName, category, metricValue) {
-    const metric = `${metricPrefix},source=${config.metrics.source},category=${category} ${metricName}=${metricValue}`;
+  sendMetricToGrafana(metricPrefix, metricName, metricValue) {
+    const metric = `${metricPrefix},source=${config.metrics.source} ${metricName}=${metricValue}`;
+    console.log(metric);
 
     fetch(`${config.metrics.url}`, {
       method: 'post',
