@@ -89,13 +89,13 @@ orderRouter.post(
     });
     const j = await r.json();
     if (r.ok) {
-      orderEvent.end = Date.now();
       res.send({ order, jwt: j.jwt, reportUrl: j.reportUrl });
     } else {
       res.status(500).send({ message: 'Failed to fulfill order at factory', reportUrl: j.reportUrl });
       orderEvent.error = true;
     }
 
+    orderEvent.end = Date.now();
     metrics.orderEvent(orderEvent);
   })
 );

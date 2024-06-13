@@ -86,9 +86,11 @@ class Metrics {
   orderEvent = (orderEvent) => {
     this.purchase.count += orderEvent.count;
     this.purchase.revenue += orderEvent.revenue;
-    const latency = orderEvent.end - orderEvent.start;
-    this.purchase.latency += latency;
     this.purchase.error += orderEvent.error ? 1 : 0;
+    if (orderEvent.end && orderEvent.start) {
+      const latency = orderEvent.end - orderEvent.start;
+      this.purchase.latency += latency;
+    }
   };
 
   httpMetrics(buf) {
@@ -127,16 +129,6 @@ class Metrics {
     buf.append('pizza_auth_failure', 'total', this.authEvents.failure);
   }
 
-  sendMetricToGrafana(metrics) {
-    fetch(`${config.metrics.url}`, {
-      method: 'post',
-      body: metrics,
-      headers: { Authorization: `Bearer ${config.metrics.userId}:${config.metrics.apiKey}` },
-    }).catch((error) => {
-      console.error('Error pushing metrics:', error);
-    });
-  }
-
   getCpuUsagePercentage() {
     const cpuUsage = os.loadavg()[0] / os.cpus().length;
     return cpuUsage.toFixed(2) * 100;
@@ -148,6 +140,16 @@ class Metrics {
     const usedMemory = totalMemory - freeMemory;
     const memoryUsage = (usedMemory / totalMemory) * 100;
     return memoryUsage.toFixed(2);
+  }
+
+  sendMetricToGrafana(metrics) {
+    fetch(`${config.metrics.url}`, {
+      method: 'post',
+      body: metrics,
+      headers: { Authorization: `Bearer ${config.metrics.userId}:${config.metrics.apiKey}` },
+    }).catch((error) => {
+      console.error('Error pushing metrics:', error);
+    });
   }
 }
 
