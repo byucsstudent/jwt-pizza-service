@@ -26,7 +26,11 @@ class Metrics {
     this.activeUsers = new Map();
 
     const timer = setInterval(() => {
-      this.sendMetricToGrafana(this.getMetrics());
+      try {
+        this.sendMetricToGrafana(this.getMetrics());
+      } catch (error) {
+        console.error('Error sending metrics:', error);
+      }
     }, 1000);
 
     timer.unref();
