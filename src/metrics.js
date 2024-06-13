@@ -32,7 +32,7 @@ class Metrics {
     timer.unref();
   }
 
-  metricsReporter = (req, res, next) => {
+  metricsReporter = (req, res) => {
     res.send(this.getMetrics());
   };
 
@@ -133,7 +133,7 @@ class Metrics {
 
     fetch(`${config.metrics.url}`, {
       method: 'post',
-      body: metric,
+      body: metrics,
       headers: { Authorization: `Bearer ${config.metrics.userId}:${config.metrics.apiKey}` },
     }).catch((error) => {
       console.error('Error pushing metrics:', error);
