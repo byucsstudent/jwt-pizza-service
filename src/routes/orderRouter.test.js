@@ -35,10 +35,37 @@ test('create order', async () => {
   const menu = await getMenu();
   const orderItem = menu[0];
   const order = { franchiseId: testFranchise.id, storeId: testStore.id, items: [{ menuId: orderItem.id, ...orderItem }] };
+
+  global.fetch = jest.fn((url) => {
+    let response = {};
+    switch (url) {
+      case 'https://pizza-factory.cs329.click/api/order':
+        response = { jwt: 'xxx' };
+        break;
+    }
+
+    return Promise.resolve({
+      status: 200,
+      ok: true,
+      json: () => {
+        return Promise.resolve(response);
+      },
+    });
+  });
+
   const createOrdersRes = await request(app).post('/api/order/').set('Authorization', `Bearer ${dinerAuthToken}`).send(order);
   expect(createOrdersRes.status).toBe(200);
   expect(createOrdersRes.body.order).toMatchObject(order);
   expect(createOrdersRes.body.jwt).toBeDefined();
+
+  expect(fetch).toHaveBeenCalledWith(expect.any(String), {
+    body: expect.any(String),
+    headers: expect.objectContaining({
+      'Content-Type': expect.any(String),
+      authorization: expect.any(String),
+    }),
+    method: expect.stringMatching('POST'),
+  });
 });
 
 async function getMenu() {

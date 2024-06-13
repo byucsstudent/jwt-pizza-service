@@ -24,14 +24,16 @@ class Metrics {
     this.purchase = { count: 0, revenue: 0, error: 0, latency: 0 };
     this.authEvents = { success: 0, failure: 0 };
     this.activeUsers = new Map();
+  }
 
+  sendMetricsPeriodically(period) {
     const timer = setInterval(() => {
       try {
         this.sendMetricToGrafana(this.getMetrics());
       } catch (error) {
         console.error('Error sending metrics:', error);
       }
-    }, 1000);
+    }, period);
 
     timer.unref();
   }
@@ -87,14 +89,6 @@ class Metrics {
     this.purchase.latency += latency;
     this.purchase.error += orderEvent.error ? 1 : 0;
   };
-
-  readAuthToken(req) {
-    const authHeader = req.headers.authorization;
-    if (authHeader) {
-      return authHeader.split(' ')[1];
-    }
-    return null;
-  }
 
   httpMetrics(buf) {
     buf.append('pizza_http_latency', 'total', this.requestLatency);
