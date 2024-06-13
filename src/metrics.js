@@ -30,8 +30,7 @@ class Metrics {
   sendMetricsPeriodically(period) {
     const timer = setInterval(() => {
       try {
-        throw new Error('Test error');
-        //        this.sendMetricToGrafana(this.getMetrics());
+        this.sendMetricToGrafana(this.getMetrics());
       } catch (error) {
         logger.log('error', 'metrics', { msg: 'Error sending metrics', err: { msg: error.message, stack: error.stack } });
       }
