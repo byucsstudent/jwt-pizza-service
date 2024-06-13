@@ -12,6 +12,7 @@ app.enable('trust proxy');
 app.use(express.json());
 app.use(setAuthUser);
 app.use(metrics.requestTracker);
+app.use('/metrics', metrics.metricsReporter);
 app.use(logger.httpLogger);
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');

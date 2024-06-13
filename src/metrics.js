@@ -1,6 +1,22 @@
 const config = require('./config.js');
 const os = require('os');
 
+class MetricBuilder {
+  constructor() {
+    this._strings = [];
+  }
+
+  append(metricPrefix, metricName, metricValue) {
+    const metric = `${metricPrefix},source=${config.metrics.source} ${metricName}=${metricValue}`;
+    this._strings.push(metric);
+    return this;
+  }
+
+  toString(delim = '\n') {
+    return this._strings.join(delim);
+  }
+}
+
 class Metrics {
   constructor() {
     this.requestLatency = 0;
@@ -10,58 +26,31 @@ class Metrics {
     this.activeUsers = new Map();
 
     const timer = setInterval(() => {
-      const httpMetrics = () => {
-        this.sendMetricToGrafana('pizza_http_latency', 'total', this.requestLatency);
-        const totalRequests = Object.values(this.requests).reduce((acc, curr) => acc + curr, 0);
-        this.sendMetricToGrafana('pizza_http_request', 'all_total', totalRequests);
-        Object.keys(this.requests).forEach((httpMethod) => {
-          this.sendMetricToGrafana(`pizza_http_request`, `${httpMethod}_total`, this.requests[httpMethod]);
-        });
-
-        this.requests = {};
-        this.requestLatency = 0;
-      };
-
-      const systemMetrics = () => {
-        this.sendMetricToGrafana('pizza_system_cpu', 'percent', this.getCpuUsagePercentage());
-        this.sendMetricToGrafana('pizza_system_memory', 'used', this.getMemoryUsagePercentage());
-      };
-
-      const userMetrics = () => {
-        this.activeUsers.forEach((value, key) => {
-          const expiresThreshold = Date.now() - 5 * 60 * 1000;
-          if (value.last < expiresThreshold) {
-            this.activeUsers.delete(key);
-          }
-        });
-        this.sendMetricToGrafana('pizza_user_count', 'total', this.activeUsers.size);
-      };
-
-      const purchaseMetrics = () => {
-        this.sendMetricToGrafana('pizza_purchase_count', 'total', this.purchase.count);
-        this.sendMetricToGrafana('pizza_purchase_revenue', 'total', this.purchase.revenue);
-        this.sendMetricToGrafana('pizza_purchase_latency', 'total', this.purchase.latency);
-        this.sendMetricToGrafana('pizza_purchase_error', 'total', this.purchase.error);
-      };
-
-      const authMetrics = () => {
-        this.sendMetricToGrafana('pizza_auth_success', 'total', this.authEvents.success);
-        this.sendMetricToGrafana('pizza_auth_failure', 'total', this.authEvents.failure);
-      };
-
-      httpMetrics();
-      systemMetrics();
-      userMetrics();
-      purchaseMetrics();
-      authMetrics();
+      this.sendMetricToGrafana(this.getMetrics());
     }, 1000);
 
     timer.unref();
   }
 
+  metricsReporter = (req, res, next) => {
+    res.send(this.getMetrics());
+  };
+
+  getMetrics(delim = '\n') {
+    const buf = new MetricBuilder();
+    this.httpMetrics(buf);
+    this.systemMetrics(buf);
+    this.userMetrics(buf);
+    this.purchaseMetrics(buf);
+    this.authMetrics(buf);
+
+    return buf.toString(delim);
+  }
+
   requestTracker = (req, res, next) => {
     const httpMethod = req.method.toLowerCase();
-    this.requests[httpMethod] = (this.requests[httpMethod] || 0) + 1;
+    const previousValue = this.requests[httpMethod] ?? 0;
+    this.requests[httpMethod] = previousValue + 1;
 
     const dateNow = Date.now();
     if (req.user) {
@@ -103,9 +92,44 @@ class Metrics {
     return null;
   }
 
-  sendMetricToGrafana(metricPrefix, metricName, metricValue) {
-    const metric = `${metricPrefix},source=${config.metrics.source} ${metricName}=${metricValue}`;
-    console.log(metric);
+  httpMetrics(buf) {
+    buf.append('pizza_http_latency', 'total', this.requestLatency);
+    const totalRequests = Object.values(this.requests).reduce((acc, curr) => acc + curr, 0);
+    buf.append('pizza_http_request', 'all_total', totalRequests);
+    Object.keys(this.requests).forEach((httpMethod) => {
+      buf.append(`pizza_http_request`, `${httpMethod}_total`, this.requests[httpMethod]);
+    });
+  }
+
+  systemMetrics(buf) {
+    buf.append('pizza_system_cpu', 'percent', this.getCpuUsagePercentage());
+    buf.append('pizza_system_memory', 'used', this.getMemoryUsagePercentage());
+  }
+
+  userMetrics(buf) {
+    this.activeUsers.forEach((value, key) => {
+      const expiresThreshold = Date.now() - 10 * 60 * 1000;
+      if (value.last < expiresThreshold) {
+        this.activeUsers.delete(key);
+      }
+    });
+    buf.append('pizza_user_count', 'total', this.activeUsers.size);
+  }
+
+  purchaseMetrics(buf) {
+    buf.append('pizza_purchase_count', 'total', this.purchase.count);
+    buf.append('pizza_purchase_revenue', 'total', this.purchase.revenue);
+    buf.append('pizza_purchase_latency', 'total', this.purchase.latency);
+    buf.append('pizza_purchase_error', 'total', this.purchase.error);
+  }
+
+  authMetrics(buf) {
+    buf.append('pizza_auth_success', 'total', this.authEvents.success);
+    buf.append('pizza_auth_failure', 'total', this.authEvents.failure);
+  }
+
+  sendMetricToGrafana(metrics) {
+    console.log(metrics);
 
     fetch(`${config.metrics.url}`, {
       method: 'post',
