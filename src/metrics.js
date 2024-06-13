@@ -1,5 +1,7 @@
 const config = require('./config.js');
 const os = require('os');
+const logger = require('./logger.js');
+const { log } = require('console');
 
 class MetricBuilder {
   constructor() {
@@ -29,9 +31,10 @@ class Metrics {
   sendMetricsPeriodically(period) {
     const timer = setInterval(() => {
       try {
-        this.sendMetricToGrafana(this.getMetrics());
+        throw new Error('Test error');
+        //        this.sendMetricToGrafana(this.getMetrics());
       } catch (error) {
-        console.error('Error sending metrics:', error);
+        logger.log('error', 'metrics', { msg: 'Error sending metrics', err: { msg: error.message, stack: error.stack } });
       }
     }, period);
 
