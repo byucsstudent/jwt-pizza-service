@@ -133,8 +133,6 @@ class Metrics {
   }
 
   sendMetricToGrafana(metrics) {
-    console.log(metrics);
-
     fetch(`${config.metrics.url}`, {
       method: 'post',
       body: metrics,
