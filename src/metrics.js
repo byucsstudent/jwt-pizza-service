@@ -1,7 +1,6 @@
 const config = require('./config.js');
 const os = require('os');
 const logger = require('./logger.js');
-const { log } = require('console');
 
 class MetricBuilder {
   constructor() {
