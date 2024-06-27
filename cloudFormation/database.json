@@ -1,0 +1,113 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Create an RDS MySQL instance from a snapshot with specified security group and IAM role",
+  "Parameters": {
+    "VpcId": {
+      "Type": "String",
+      "Description": "The VPC ID where the RDS instance will be deployed"
+    },
+    "DBSnapshotIdentifier": {
+      "Type": "String",
+      "Description": "The identifier for the DB snapshot to restore"
+    },
+    "DBSecurityGroupId": {
+      "Type": "String",
+      "Description": "The security group ID for the RDS instance"
+    },
+    "DBInstanceRoleArn": {
+      "Type": "String",
+      "Description": "The IAM role ARN for the RDS instance"
+    }
+  },
+  "Resources": {
+    "MyDBInstance": {
+      "Type": "AWS::RDS::DBInstance",
+      "Properties": {
+        "DBInstanceIdentifier": "MyRDSInstance",
+        "DBInstanceClass": "db.t2.micro",
+        "Engine": "mysql",
+        "EngineVersion": "8.0.19",
+        "DBSnapshotIdentifier": {
+          "Ref": "DBSnapshotIdentifier"
+        },
+        "VPCSecurityGroups": [
+          {
+            "Ref": "DBSecurityGroupId"
+          }
+        ],
+        "DBSubnetGroupName": {
+          "Ref": "DBSubnetGroup"
+        },
+        "MasterUsername": "admin",
+        "MasterUserPassword": {
+          "Fn::Join": [
+            "",
+            [
+              {
+                "Fn::Select": [
+                  0,
+                  {
+                    "Fn::Split": [
+                      "=",
+                      {
+                        "Ref": "AWS::NoValue"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "MyGeneratedPassword"
+            ]
+          ]
+        },
+        "PubliclyAccessible": false,
+        "IAMDatabaseAuthenticationEnabled": true,
+        "DBParameterGroupName": {
+          "Ref": "DBParameterGroup"
+        },
+        "AssociatedRoles": [
+          {
+            "RoleArn": {
+              "Ref": "DBInstanceRoleArn"
+            }
+          }
+        ]
+      }
+    },
+    "DBParameterGroup": {
+      "Type": "AWS::RDS::DBParameterGroup",
+      "Properties": {
+        "Description": "My RDS parameter group",
+        "Family": "mysql8.0",
+        "Parameters": {}
+      }
+    },
+    "DBSubnetGroup": {
+      "Type": "AWS::RDS::DBSubnetGroup",
+      "Properties": {
+        "DBSubnetGroupDescription": "Subnet group for RDS instance",
+        "SubnetIds": {
+          "Fn::Split": [
+            ",",
+            {
+              "Fn::ImportValue": {
+                "Fn::Sub": "${VpcId}-SubnetIds"
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "RDSInstanceEndpoint": {
+      "Description": "The endpoint address of the RDS instance",
+      "Value": {
+        "Fn::GetAtt": [
+          "MyDBInstance",
+          "Endpoint.Address"
+        ]
+      }
+    }
+  }
+}
