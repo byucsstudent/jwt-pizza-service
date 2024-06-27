@@ -82,6 +82,7 @@ jobs:
 
       - name: Update coverage and version
         run: |
+          echo "hello"
           printf '{"version": "%s" }' ${{steps.set_version.outputs.version}} > src/version.json
           # coverage_pct=$(grep -o '"pct":[0-9.]*' coverage/coverage-summary.json | head -n 1 | cut -d ':' -f 2)
           # color=$(echo "$coverage_pct < 80" | bc -l | awk '{if ($1) print "yellow"; else print "green"}')
