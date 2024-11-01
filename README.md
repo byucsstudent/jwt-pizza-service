@@ -6,6 +6,14 @@ Backend service for making JWT pizzas. This service tracks users and franchises 
 
 JWTs are used for authentication objects.
 
+## Grafana
+
+329f24 - account be329f24
+
+## RDS
+
+jwtpizza
+
 ## Deployment
 
 In order for the server to work correctly it must be configured by providing a `config.js` file.
