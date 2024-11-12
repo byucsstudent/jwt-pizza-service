@@ -171,4 +171,4 @@ jobs:
           wait-for-service-stability: false
       - name: Annotate deployment in Grafana
         run: |
-          curl -X POST https://be329f24.grafana.net/api/annotations -H "Authorization: Bearer ${{ secrets.GRAFANA_ACCESS_TOKEN }}" -H "Content-Type:application/json" -d ' "dashboardUID":"de327ky1a6olca", "panelId":1, "tags":["backend","production"], "text":"Version '"$version"' deployed" }'
+          curl -X POST https://be329f24.grafana.net/api/annotations -H "Authorization: Bearer ${{ secrets.GRAFANA_ACCESS_TOKEN }}" -H "Content-Type:application/json" -d ' { "dashboardUID":"de327ky1a6olca", "panelId":1, "tags":["backend","production"], "text":"Version '"$version"' deployed" }'
