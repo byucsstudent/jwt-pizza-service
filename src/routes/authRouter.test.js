@@ -1,9 +1,17 @@
-test('mocking function matchers', () => {
-  const mockFn = jest.fn((p) => `${p}`);
+const request = require('supertest');
+const app = require('../service');
 
-  expect(mockFn(1)).toBe('1');
-  expect(mockFn(2)).toBe('2');
+test('register user', async () => {
+  const response = await request(app).post('/api/auth').send({
+    name: 't1',
+    email: 't1@jwt.com',
+    password: 't1',
+  });
 
-  expect(mockFn).toHaveBeenCalledWith(1);
-  expect(mockFn).toHaveBeenLastCalledWith(2);
+  expect(response.statusCode).toBe(200);
+  expect(response.body).toMatchObject({
+    user: { email: 't1@jwt.com', name: 't1', id: expect.any(Number), roles: [{ role: 'diner' }] },
+
+    token: expect.any(String),
+  });
 });
