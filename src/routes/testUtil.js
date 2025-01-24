@@ -13,8 +13,9 @@ async function createAdminUser() {
   return { ...user, password: 'toomanysecrets' };
 }
 
-function randomName() {
-  return Math.random().toString(36).substring(2, 12);
+async function getAdminUserToken(service) {
+  const loginRes = await service.put('/api/auth').send({ email: 'a@jwt.com', password: 'admin' });
+  return loginRes.body.token;
 }
 
 async function loginUser(service) {
@@ -30,8 +31,13 @@ async function registerUser(service) {
   return [registerRes.body.user, registerRes.body.token];
 }
 
+function randomName() {
+  return Math.random().toString(36).substring(2, 12);
+}
+
 module.exports = {
   randomName,
+  getAdminUserToken,
   createAdminUser,
   loginUser,
   registerUser,
