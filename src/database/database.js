@@ -22,7 +22,12 @@ class DB {
   async addMenuItem(item) {
     const connection = await this.getConnection();
     try {
-      const addResult = await this.query(connection, `INSERT INTO menu (title, description, image, price) VALUES (?, ?, ?, ?)`, [item.title, item.description, item.image, item.price]);
+      const addResult = await this.query(connection, `INSERT INTO menu (title, description, image, price) VALUES (?, ?, ?, ?)`, [
+        item.title,
+        item.description,
+        item.image,
+        item.price,
+      ]);
       return { ...item, id: addResult.insertId };
     } finally {
       connection.end();
@@ -100,7 +105,7 @@ class DB {
     token = this.getTokenSignature(token);
     const connection = await this.getConnection();
     try {
-      await this.query(connection, `INSERT INTO auth (token, userId) VALUES (?, ?)`, [token, userId]);
+      await this.query(connection, `INSERT INTO auth (token, userId) VALUES (?, ?) ON DUPLICATE KEY UPDATE token=token`, [token, userId]);
     } finally {
       connection.end();
     }
@@ -131,7 +136,11 @@ class DB {
     const connection = await this.getConnection();
     try {
       const offset = this.getOffset(page, config.db.listPerPage);
-      const orders = await this.query(connection, `SELECT id, franchiseId, storeId, date FROM dinerOrder WHERE dinerId=? LIMIT ${offset},${config.db.listPerPage}`, [user.id]);
+      const orders = await this.query(
+        connection,
+        `SELECT id, franchiseId, storeId, date FROM dinerOrder WHERE dinerId=? LIMIT ${offset},${config.db.listPerPage}`,
+        [user.id]
+      );
       for (const order of orders) {
         let items = await this.query(connection, `SELECT id, menuId, description, price FROM orderItem WHERE orderId=?`, [order.id]);
         order.items = items;
@@ -145,11 +154,20 @@ class DB {
   async addDinerOrder(user, order) {
     const connection = await this.getConnection();
     try {
-      const orderResult = await this.query(connection, `INSERT INTO dinerOrder (dinerId, franchiseId, storeId, date) VALUES (?, ?, ?, now())`, [user.id, order.franchiseId, order.storeId]);
+      const orderResult = await this.query(connection, `INSERT INTO dinerOrder (dinerId, franchiseId, storeId, date) VALUES (?, ?, ?, now())`, [
+        user.id,
+        order.franchiseId,
+        order.storeId,
+      ]);
       const orderId = orderResult.insertId;
       for (const item of order.items) {
         const menuId = await this.getID(connection, 'id', item.menuId, 'menu');
-        await this.query(connection, `INSERT INTO orderItem (orderId, menuId, description, price) VALUES (?, ?, ?, ?)`, [orderId, menuId, item.description, item.price]);
+        await this.query(connection, `INSERT INTO orderItem (orderId, menuId, description, price) VALUES (?, ?, ?, ?)`, [
+          orderId,
+          menuId,
+          item.description,
+          item.price,
+        ]);
       }
       return { ...order, id: orderId };
     } finally {
@@ -239,7 +257,11 @@ class DB {
   async getFranchise(franchise) {
     const connection = await this.getConnection();
     try {
-      franchise.admins = await this.query(connection, `SELECT u.id, u.name, u.email FROM userRole AS ur JOIN user AS u ON u.id=ur.userId WHERE ur.objectId=? AND ur.role='franchisee'`, [franchise.id]);
+      franchise.admins = await this.query(
+        connection,
+        `SELECT u.id, u.name, u.email FROM userRole AS ur JOIN user AS u ON u.id=ur.userId WHERE ur.objectId=? AND ur.role='franchisee'`,
+        [franchise.id]
+      );
 
       franchise.stores = await this.query(
         connection,

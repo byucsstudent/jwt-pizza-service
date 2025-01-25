@@ -13,9 +13,16 @@ async function createAdminUser() {
   return { ...user, password: 'toomanysecrets' };
 }
 
+let adminToken;
 async function getAdminUserToken(service) {
-  const loginRes = await service.put('/api/auth').send({ email: 'a@jwt.com', password: 'admin' });
-  return loginRes.body.token;
+  if (!adminToken) {
+    const adminUser = await createAdminUser();
+    const loginRes = await service.put('/api/auth').send({ email: adminUser.email, password: (await adminUser).password });
+    if (loginRes.ok) {
+      adminToken = loginRes.body.token;
+    }
+  }
+  return adminToken;
 }
 
 async function loginUser(service) {
