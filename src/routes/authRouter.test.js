@@ -69,11 +69,11 @@ test('update user without auth', async () => {
 });
 
 test('update user wrong user', async () => {
-  const user = { ...dinerUser, email: 'change' + dinerUser.email };
+  const [user, userToken] = await testUtil.registerUser(request(app));
   const updateRes = await request(app)
-    .put('/api/auth/1')
+    .put('/api/auth/' + dinerUser.id)
     .send(user)
-    .set('Authorization', 'Bearer ' + dinerAuthToken);
+    .set('Authorization', 'Bearer ' + userToken);
   expect(updateRes.status).toBe(403);
 });
 
