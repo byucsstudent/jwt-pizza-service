@@ -78,10 +78,10 @@ test('update user wrong user', async () => {
 });
 
 test('logout user', async () => {
-  [user, userToken] = await testUtil.registerUser(request(app));
+  const [, userToken] = await testUtil.registerUser(request(app));
   const logoutRes = await request(app)
     .delete('/api/auth')
-    .set('Authorization', 'Bearer ' + dinerAuthToken);
+    .set('Authorization', 'Bearer ' + userToken);
   expect(logoutRes.status).toBe(200);
 });
 

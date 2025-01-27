@@ -2,11 +2,10 @@ const request = require('supertest');
 const app = require('../service');
 const testUtil = require('../testUtil');
 
-let dinerUser;
 let dinerToken;
 
 beforeAll(async () => {
-  [dinerUser, dinerToken] = await testUtil.registerUser(request(app));
+  [, dinerToken] = await testUtil.registerUser(request(app));
 });
 
 test('menu get', async () => {
@@ -32,7 +31,7 @@ test('menu item add not admin', async () => {
 });
 
 test('menu order get', async () => {
-  [user, token] = await testUtil.registerUser(request(app));
+  const [, token] = await testUtil.registerUser(request(app));
   const orders = await getOrders(token);
   expect(orders).toEqual([]);
 

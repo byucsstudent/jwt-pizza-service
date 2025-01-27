@@ -65,7 +65,7 @@ test('franchise add store', async () => {
 });
 
 test('franchise add store no auth', async () => {
-  const [franchiseeUser, franchiseeToken] = await testUtil.registerUser(request(app));
+  const [franchiseeUser] = await testUtil.registerUser(request(app));
   const [franchise] = await createFranchise(franchiseeUser.email);
   const [, dinerToken] = await testUtil.registerUser(request(app));
   const [, storeRes] = await createStore(franchise, dinerToken);

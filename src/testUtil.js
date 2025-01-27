@@ -25,11 +25,6 @@ async function getAdminUserToken(service) {
   return adminToken;
 }
 
-async function loginUser(service) {
-  const loginRes = await service.put('/api/auth').send(testUser);
-  return loginRes.body.user;
-}
-
 async function registerUser(service) {
   const testUser = { name: 'pizza diner', email: `${randomName()}@test.com`, password: 'a' };
   const registerRes = await service.post('/api/auth').send(testUser);
@@ -46,6 +41,5 @@ module.exports = {
   randomName,
   getAdminUserToken,
   createAdminUser,
-  loginUser,
   registerUser,
 };
