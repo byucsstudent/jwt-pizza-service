@@ -1,7 +1,6 @@
 const request = require('supertest');
 const app = require('../service');
-const testUtil = require('./testUtil');
-const { json } = require('express');
+const testUtil = require('../testUtil');
 
 let dinerUser;
 let dinerToken;

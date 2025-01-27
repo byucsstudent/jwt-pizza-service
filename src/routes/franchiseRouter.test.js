@@ -1,6 +1,6 @@
 const request = require('supertest');
 const app = require('../service');
-const testUtil = require('./testUtil');
+const testUtil = require('../testUtil');
 
 test('franchise get all', async () => {
   const franchisesRes = await request(app).get('/api/franchise');

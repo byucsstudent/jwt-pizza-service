@@ -1,6 +1,6 @@
 const request = require('supertest');
 const app = require('../service');
-const testUtil = require('./testUtil');
+const testUtil = require('../testUtil');
 
 let dinerUser;
 let dinerAuthToken;
@@ -42,6 +42,12 @@ test('login', async () => {
   const expectedUser = { ...dinerUser, roles: [{ role: 'diner' }] };
   delete expectedUser.password;
   expect(loginRes.body.user).toMatchObject(expectedUser);
+});
+
+test('login bad password', async () => {
+  const badPasswordUser = { ...dinerUser, password: 'bad' + dinerUser.password };
+  const loginRes = await request(app).put('/api/auth').send(badPasswordUser);
+  expect(loginRes.status).toBe(404);
 });
 
 test('update user', async () => {
