@@ -5,6 +5,8 @@ const franchiseRouter = require('./routes/franchiseRouter.js');
 const version = require('./version.json');
 const config = require('./config.js');
 
+console.log(`Running version ${version.version}`);
+
 const app = express();
 app.use(express.json());
 app.use(setAuthUser);

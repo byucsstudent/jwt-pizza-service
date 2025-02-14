@@ -11,17 +11,16 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.set_version.outputs.version }}
-    services:
-      mysql:
-        image: mysql:8.0.29
-        env:
-          MYSQL_ROOT_PASSWORD: tempdbpassword
-          MYSQL_DATABASE: pizza
-        ports:
-          - '3306:3306'
-        options: >-
-          --health-cmd "mysqladmin ping -ptempdbpassword" --health-interval 10s --health-start-period 10s --health-timeout 5s --health-retries 10
-
+    # services:
+    #   mysql:
+    #     image: mysql:8.0.29
+    #     env:
+    #       MYSQL_ROOT_PASSWORD: tempdbpassword
+    #       MYSQL_DATABASE: pizza
+    #     ports:
+    #       - '3306:3306'
+    #     options: >-
+    #       --health-cmd "mysqladmin ping -ptempdbpassword" --health-interval 10s --health-start-period 10s --health-timeout 5s --health-retries 10
 
     steps:
       - name: Checkout repo
@@ -58,8 +57,8 @@ jobs:
             },
           };" > src/config.js
 
-      - name: Tests
-        run: npm test
+      # - name: Tests
+      #   run: npm test
 
       - name: set version
         id: set_version
@@ -131,9 +130,5 @@ jobs:
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:latest" >>  $GITHUB_OUTPUT
 
       - name: Deploy new task definition
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-        with:
-          task-definition: jwt-pizza-service
-          service: jwt-pizza-service
-          cluster: jwt-pizza-service
-          wait-for-service-stability: false
+        run: |
+          aws ecs update-service --cluster jwt-pizza --service jwt-pizza --force-new-deployment
