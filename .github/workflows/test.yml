@@ -1,0 +1,19 @@
+name: CI Pipeline
+
+on:
+  workflow_dispatch:
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        env:
+          version: 9
+        with:
+          tag: version-9
+          name: Version 9
+          body: |
+            ## 🚀 Changes
+
+            I just built a release without a permission.
