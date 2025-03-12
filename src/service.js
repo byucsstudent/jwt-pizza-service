@@ -4,6 +4,7 @@ const orderRouter = require('./routes/orderRouter.js');
 const franchiseRouter = require('./routes/franchiseRouter.js');
 const version = require('./version.json');
 const config = require('./config.js');
+const metrics = require('./metrics.js');
 
 console.log(`Running new version ${version.version}`);
 
@@ -17,6 +18,8 @@ app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   next();
 });
+
+app.use(metrics.track('all'));
 
 const apiRouter = express.Router();
 app.use('/api', apiRouter);
