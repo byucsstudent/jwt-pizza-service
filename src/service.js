@@ -19,7 +19,7 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(metrics.track('all'));
+app.use(metrics.track);
 
 const apiRouter = express.Router();
 app.use('/api', apiRouter);
