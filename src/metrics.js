@@ -1,6 +1,5 @@
 const config = require('./config').metrics;
 const os = require('os');
-const { send } = require('process');
 
 function getCpuUsagePercentage() {
   const cpuUsage = os.loadavg()[0] / os.cpus().length;
@@ -35,14 +34,14 @@ const track = (req, res, next) => {
 setInterval(() => {
   Object.keys(requests).forEach((endpoint) => {
     const info = requests[endpoint];
-    sendMetricToGrafana('requests', info.count, 'sum', 'asInt', { endpoint: info.path, method: info.method });
-    sendMetricToGrafana('request_latency', info.latency, 'sum', 'asInt', { endpoint: info.path, method: info.method });
-    sendMetricToGrafana('cpu_usage', getCpuUsagePercentage(), 'gauge', 'asDouble', {});
-    sendMetricToGrafana('memory_usage', getMemoryUsagePercentage(), 'gauge', 'asDouble', {});
+    sendMetricToGrafana('requests', info.count, '1', 'sum', 'asInt', { endpoint: info.path, method: info.method });
+    sendMetricToGrafana('request_latency', info.latency, '1', 'sum', 'asInt', { endpoint: info.path, method: info.method });
+    sendMetricToGrafana('cpu_usage', getCpuUsagePercentage(), '%', 'gauge', 'asDouble', {});
+    sendMetricToGrafana('memory_usage', getMemoryUsagePercentage(), '%', 'gauge', 'asDouble', {});
   });
 }, 10000);
 
-function sendMetricToGrafana(metricName, metricValue, metricType, valueType, attributes) {
+function sendMetricToGrafana(metricName, metricValue, metricUnit, metricType, valueType, attributes) {
   attributes = { ...attributes, source: config.source };
 
   const metric = {
@@ -53,7 +52,7 @@ function sendMetricToGrafana(metricName, metricValue, metricType, valueType, att
             metrics: [
               {
                 name: metricName,
-                unit: '1',
+                unit: metricUnit,
                 [metricType]: {
                   dataPoints: [
                     {
