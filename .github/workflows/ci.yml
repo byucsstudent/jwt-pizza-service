@@ -22,6 +22,7 @@ jobs:
         options: >-
           --health-cmd "mysqladmin ping -ptempdbpassword" --health-interval 10s --health-start-period 10s --health-timeout 5s --health-retries 10
 
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -152,3 +153,6 @@ jobs:
             ${{ github.event.head_commit.message }}
 
             **commit**: ${{ github.sha }}
+      - name: Annotate deployment in Grafana
+        run: |
+          curl -X POST https://be329w25.grafana.net/api/annotations -H "Authorization: Bearer ${{ secrets.GRAFANA_ACCESS_TOKEN }}" -H "Content-Type:application/json" -d '{"dashboardUID":"ceevcz47l2ps0a", "panelId":2, "tags":["backend","production"], "text":"Version '"$version"' deployed" }'
