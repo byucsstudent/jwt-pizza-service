@@ -30,12 +30,27 @@ const track = (req, res, next) => {
   next();
 };
 
+const pizzaMetrics = {
+  purchases: 0,
+  failures: 0,
+  revenue: 0.0,
+};
+
+function trackPizzaPurchase(purchases, failures, revenue) {
+  pizzaMetrics.purchases += purchases;
+  pizzaMetrics.failures += failures;
+  pizzaMetrics.revenue += revenue;
+}
+
 // This will periodically send metrics to Grafana
 setInterval(() => {
   Object.keys(requests).forEach((endpoint) => {
     const info = requests[endpoint];
     sendMetricToGrafana('requests', info.count, '1', 'sum', 'asInt', { endpoint: info.path, method: info.method });
     sendMetricToGrafana('request_latency', info.latency, '1', 'sum', 'asInt', { endpoint: info.path, method: info.method });
+    sendMetricToGrafana('pizza_purchase', pizzaMetrics.purchases, '1', 'sum', 'asInt', {});
+    sendMetricToGrafana('pizza_failures', pizzaMetrics.failures, '1', 'sum', 'asInt', {});
+    sendMetricToGrafana('pizza_revenue', pizzaMetrics.revenue, '1', 'sum', 'asDouble', {});
     sendMetricToGrafana('cpu_usage', getCpuUsagePercentage(), '%', 'gauge', 'asDouble', {});
     sendMetricToGrafana('memory_usage', getMemoryUsagePercentage(), '%', 'gauge', 'asDouble', {});
   });
@@ -101,4 +116,4 @@ function sendMetricToGrafana(metricName, metricValue, metricUnit, metricType, va
     });
 }
 
-module.exports = { track };
+module.exports = { track, trackPizzaPurchase };
