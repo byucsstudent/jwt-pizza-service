@@ -4,6 +4,7 @@ const { Role, DB } = require('../database/database.js');
 const { authRouter } = require('./authRouter.js');
 const { asyncHandler, StatusCodeError } = require('../endpointHelper.js');
 const { trackPizzaPurchase } = require('../metrics.js');
+const logger = require('../logger.js');
 
 const orderRouter = express.Router();
 
@@ -48,6 +49,7 @@ orderRouter.put(
   asyncHandler(async (req, res) => {
     if (req.user.isRole(Role.Admin)) {
       enableChaos = req.params.state === 'true';
+      logger.log('info', 'chaos', { enableChaos });
     }
 
     res.json({ chaos: req.params.state });
@@ -114,6 +116,8 @@ orderRouter.post(
       res.status(500).send({ message: 'Failed to fulfill order at factory', reportPizzaCreationErrorToPizzaFactoryUrl: j.reportUrl });
       trackPizzaPurchase(0, 1, 0);
     }
+
+    logger.log('info', 'order', { dinerId: req.user.id, status: r.status, order: order });
   })
 );
 
