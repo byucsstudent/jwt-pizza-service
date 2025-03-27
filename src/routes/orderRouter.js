@@ -117,7 +117,8 @@ orderRouter.post(
       trackPizzaPurchase(0, 1, 0);
     }
 
-    logger.log('info', 'order', { dinerId: req.user.id, status: r.status, order: order });
+    const level = req.status >= 400 ? 'error' : 'info';
+    logger.log(level, 'order', { dinerId: req.user.id, status: r.status, order: order });
   })
 );
 
