@@ -15,7 +15,7 @@ function getMemoryUsagePercentage() {
 }
 
 const requests = {};
-const errors = 0;
+let errors = 0;
 
 const track = (req, res, next) => {
   const endpoint = `[${req.method}] ${req.path}`;
