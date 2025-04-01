@@ -15,12 +15,15 @@ function getMemoryUsagePercentage() {
 }
 
 const requests = {};
+const errors = 0;
 
 const track = (req, res, next) => {
   const endpoint = `[${req.method}] ${req.path}`;
   const info = requests[endpoint] || { count: 0, latency: 0, method: req.method, path: req.path };
   info.count++;
   requests[endpoint] = info;
+
+  errors += res.statusCode >= 400 ? 1 : 0;
 
   const start = Date.now();
   res.on('finish', () => {
@@ -46,6 +49,7 @@ function trackPizzaPurchase(purchases, failures, revenue) {
 setInterval(() => {
   Object.keys(requests).forEach((endpoint) => {
     const info = requests[endpoint];
+    sendMetricToGrafana('errors', errors.count, '1', 'sum', 'asInt', {});
     sendMetricToGrafana('requests', info.count, '1', 'sum', 'asInt', { endpoint: info.path, method: info.method });
     sendMetricToGrafana('request_latency', info.latency, '1', 'sum', 'asInt', { endpoint: info.path, method: info.method });
     sendMetricToGrafana('pizza_purchase', pizzaMetrics.purchases, '1', 'sum', 'asInt', {});
