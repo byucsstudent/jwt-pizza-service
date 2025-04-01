@@ -16,6 +16,7 @@ function getMemoryUsagePercentage() {
 
 const requests = {};
 let errors = 0;
+let successes = 0;
 
 const track = (req, res, next) => {
   const endpoint = `[${req.method}] ${req.path}`;
@@ -24,6 +25,7 @@ const track = (req, res, next) => {
   requests[endpoint] = info;
 
   errors += res.statusCode >= 400 ? 1 : 0;
+  successes += res.statusCode < 400 ? 1 : 0;
 
   const start = Date.now();
   res.on('finish', () => {
@@ -50,6 +52,7 @@ setInterval(() => {
   Object.keys(requests).forEach((endpoint) => {
     const info = requests[endpoint];
     sendMetricToGrafana('errors', errors.count, '1', 'sum', 'asInt', {});
+    sendMetricToGrafana('successes', errors.count, '1', 'sum', 'asInt', {});
     sendMetricToGrafana('requests', info.count, '1', 'sum', 'asInt', { endpoint: info.path, method: info.method });
     sendMetricToGrafana('request_latency', info.latency, '1', 'sum', 'asInt', { endpoint: info.path, method: info.method });
     sendMetricToGrafana('pizza_purchase', pizzaMetrics.purchases, '1', 'sum', 'asInt', {});
