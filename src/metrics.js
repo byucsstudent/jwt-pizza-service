@@ -24,11 +24,11 @@ const track = (req, res, next) => {
   info.count++;
   requests[endpoint] = info;
 
-  http400plus += res.statusCode >= 400 ? 1 : 0;
-  http200 += res.statusCode < 400 ? 1 : 0;
-
   const start = Date.now();
   res.on('finish', () => {
+    http400plus += res.statusCode >= 400 ? 1 : 0;
+    http200 += res.statusCode < 400 ? 1 : 0;
+
     info.latency += Date.now() - start;
   });
 
