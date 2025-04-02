@@ -49,73 +49,81 @@ function trackPizzaPurchase(purchases, failures, revenue) {
 
 // This will periodically send metrics to Grafana
 setInterval(() => {
+  const metrics = [];
   Object.keys(requests).forEach((endpoint) => {
     const info = requests[endpoint];
-    sendMetricToGrafana('errors', errors.count, '1', 'sum', 'asInt', {});
-    sendMetricToGrafana('successes', errors.count, '1', 'sum', 'asInt', {});
-    sendMetricToGrafana('requests', info.count, '1', 'sum', 'asInt', { endpoint: info.path, method: info.method });
-    sendMetricToGrafana('request_latency', info.latency, '1', 'sum', 'asInt', { endpoint: info.path, method: info.method });
-    sendMetricToGrafana('pizza_purchase', pizzaMetrics.purchases, '1', 'sum', 'asInt', {});
-    sendMetricToGrafana('pizza_failures', pizzaMetrics.failures, '1', 'sum', 'asInt', {});
-    sendMetricToGrafana('pizza_revenue', pizzaMetrics.revenue, '1', 'sum', 'asDouble', {});
-    sendMetricToGrafana('cpu_usage', getCpuUsagePercentage(), '%', 'gauge', 'asDouble', {});
-    sendMetricToGrafana('memory_usage', getMemoryUsagePercentage(), '%', 'gauge', 'asDouble', {});
+    metrics.push(createMetric('requests', info.count, '1', 'sum', 'asInt', { endpoint: info.path, method: info.method }));
+    metrics.push(createMetric('request_latency', info.latency, '1', 'sum', 'asInt', { endpoint: info.path, method: info.method }));
   });
+
+  metrics.push(createMetric('errors', errors.count, '1', 'sum', 'asInt', {}));
+  metrics.push(createMetric('successes', errors.count, '1', 'sum', 'asInt', {}));
+  metrics.push(createMetric('pizza_purchase', pizzaMetrics.purchases, '1', 'sum', 'asInt', {}));
+  metrics.push(createMetric('pizza_failures', pizzaMetrics.failures, '1', 'sum', 'asInt', {}));
+  metrics.push(createMetric('pizza_revenue', pizzaMetrics.revenue, '1', 'sum', 'asDouble', {}));
+  metrics.push(createMetric('cpu_usage', getCpuUsagePercentage(), '%', 'gauge', 'asDouble', {}));
+  metrics.push(createMetric('memory_usage', getMemoryUsagePercentage(), '%', 'gauge', 'asDouble', {}));
+
+  sendMetricToGrafana(metrics);
 }, 10000);
 
-function sendMetricToGrafana(metricName, metricValue, metricUnit, metricType, valueType, attributes) {
+function createMetric(metricName, metricValue, metricUnit, metricType, valueType, attributes) {
   attributes = { ...attributes, source: config.source };
 
   const metric = {
-    resourceMetrics: [
-      {
-        scopeMetrics: [
-          {
-            metrics: [
-              {
-                name: metricName,
-                unit: metricUnit,
-                [metricType]: {
-                  dataPoints: [
-                    {
-                      [valueType]: metricValue,
-                      timeUnixNano: Date.now() * 1000000,
-                      attributes: [],
-                    },
-                  ],
-                },
-              },
-            ],
-          },
-        ],
-      },
-    ],
+    name: metricName,
+    unit: metricUnit,
+    [metricType]: {
+      dataPoints: [
+        {
+          [valueType]: metricValue,
+          timeUnixNano: Date.now() * 1000000,
+          attributes: [],
+        },
+      ],
+    },
   };
 
   Object.keys(attributes).forEach((key) => {
-    metric.resourceMetrics[0].scopeMetrics[0].metrics[0][metricType].dataPoints[0].attributes.push({
+    metric[metricType].dataPoints[0].attributes.push({
       key: key,
       value: { stringValue: attributes[key] },
     });
   });
 
   if (metricType === 'sum') {
-    metric.resourceMetrics[0].scopeMetrics[0].metrics[0][metricType].aggregationTemporality = 'AGGREGATION_TEMPORALITY_CUMULATIVE';
-    metric.resourceMetrics[0].scopeMetrics[0].metrics[0][metricType].isMonotonic = true;
+    metric[metricType].aggregationTemporality = 'AGGREGATION_TEMPORALITY_CUMULATIVE';
+    metric[metricType].isMonotonic = true;
   }
+
+  return metric;
+}
+
+function sendMetricToGrafana(metrics) {
+  const body = {
+    resourceMetrics: [
+      {
+        scopeMetrics: [
+          {
+            metrics,
+          },
+        ],
+      },
+    ],
+  };
 
   fetch(`${config.url}`, {
     method: 'POST',
-    body: JSON.stringify(metric),
+    body: JSON.stringify(body),
     headers: { Authorization: `Bearer ${config.apiKey}`, 'Content-Type': 'application/json' },
   })
     .then((response) => {
       if (!response.ok) {
         response.text().then((data) => {
-          console.error('Failed to push metrics data to Grafana ' + data);
+          console.error('Failed to push metrics ' + body);
         });
       } else {
-        console.log(`Pushed ${metricName}`);
+        console.log(`Pushed metrics`);
       }
     })
     .catch((error) => {
