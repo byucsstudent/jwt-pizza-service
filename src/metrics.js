@@ -57,7 +57,7 @@ setInterval(() => {
   });
 
   metrics.push(createMetric('errors', errors.count, '1', 'sum', 'asInt', {}));
-  metrics.push(createMetric('successes', errors.count, '1', 'sum', 'asInt', {}));
+  metrics.push(createMetric('successes', successes.count, '1', 'sum', 'asInt', {}));
   metrics.push(createMetric('pizza_purchase', pizzaMetrics.purchases, '1', 'sum', 'asInt', {}));
   metrics.push(createMetric('pizza_failures', pizzaMetrics.failures, '1', 'sum', 'asInt', {}));
   metrics.push(createMetric('pizza_revenue', pizzaMetrics.revenue, '1', 'sum', 'asDouble', {}));
@@ -120,7 +120,7 @@ function sendMetricToGrafana(metrics) {
     .then((response) => {
       if (!response.ok) {
         response.text().then((data) => {
-          console.error('Failed to push metrics ' + body);
+          console.error('Failed to push metrics ' + data);
         });
       } else {
         console.log(`Pushed metrics`);
