@@ -15,8 +15,8 @@ function getMemoryUsagePercentage() {
 }
 
 const requests = {};
-let errors = 0;
-let successes = 0;
+let http400plus = 0;
+let http200 = 0;
 
 const track = (req, res, next) => {
   const endpoint = `[${req.method}] ${req.path}`;
@@ -24,8 +24,8 @@ const track = (req, res, next) => {
   info.count++;
   requests[endpoint] = info;
 
-  errors += res.statusCode >= 400 ? 1 : 0;
-  successes += res.statusCode < 400 ? 1 : 0;
+  http400plus += res.statusCode >= 400 ? 1 : 0;
+  http200 += res.statusCode < 400 ? 1 : 0;
 
   const start = Date.now();
   res.on('finish', () => {
@@ -56,8 +56,8 @@ setInterval(() => {
     metrics.push(createMetric('request_latency', info.latency, '1', 'sum', 'asInt', { endpoint: info.path, method: info.method }));
   });
 
-  metrics.push(createMetric('errors', errors.count, '1', 'sum', 'asInt', {}));
-  metrics.push(createMetric('successes', successes.count, '1', 'sum', 'asInt', {}));
+  metrics.push(createMetric('http400plus', http400plus, '1', 'sum', 'asInt', {}));
+  metrics.push(createMetric('http200', http200, '1', 'sum', 'asInt', {}));
   metrics.push(createMetric('pizza_purchase', pizzaMetrics.purchases, '1', 'sum', 'asInt', {}));
   metrics.push(createMetric('pizza_failures', pizzaMetrics.failures, '1', 'sum', 'asInt', {}));
   metrics.push(createMetric('pizza_revenue', pizzaMetrics.revenue, '1', 'sum', 'asDouble', {}));
