@@ -6,6 +6,11 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
+      - name: Run Dastardly Action Step
+        uses: PortSwigger/dastardly-github-action@main
+        with:
+          target-url: 'https://pizza.cs329.click'
+
       - name: Create Release
         uses: ncipollo/release-action@v1
         env:
