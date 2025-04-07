@@ -19,8 +19,12 @@ let http400plus = 0;
 let http200 = 0;
 
 const track = (req, res, next) => {
-  const endpoint = `[${req.method}] ${req.path}`;
-  const info = requests[endpoint] || { count: 0, latency: 0, method: req.method, path: req.path };
+  let path = req.path;
+  if (!path.startsWith('/api')) {
+    path = '/nonapi';
+  }
+  const endpoint = `[${req.method}] ${path}`;
+  const info = requests[endpoint] || { count: 0, latency: 0, method: req.method, path: path };
   info.count++;
   requests[endpoint] = info;
 
