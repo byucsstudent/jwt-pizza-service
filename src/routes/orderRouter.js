@@ -109,11 +109,11 @@ orderRouter.post(
     });
     const j = await r.json();
     if (r.ok) {
-      res.send({ order, reportSlowPizzaToFactoryUrl: j.reportUrl, jwt: j.jwt });
+      res.send({ order, followLinkToEndChaos: j.reportUrl, jwt: j.jwt });
       const totalPurchase = order.items.reduce((total, item) => total + item.price, 0);
       trackPizzaPurchase(1, 0, totalPurchase);
     } else {
-      res.status(500).send({ message: 'Failed to fulfill order at factory', reportPizzaCreationErrorToPizzaFactoryUrl: j.reportUrl });
+      res.status(500).send({ message: 'Failed to fulfill order at factory', followLinkToEndChaos: j.reportUrl });
       trackPizzaPurchase(0, 1, 0);
     }
 
