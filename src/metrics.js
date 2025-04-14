@@ -19,12 +19,13 @@ let http400plus = 0;
 let http200 = 0;
 
 const track = (req, res, next) => {
-  let path = req.path;
-  if (!path.startsWith('/api')) {
-    path = '/nonapi';
-  }
-  const endpoint = `[${req.method}] ${path}`;
-  const info = requests[endpoint] || { count: 0, latency: 0, method: req.method, path: path };
+  recordRequest(req.method, req.path, res);
+  next();
+};
+
+function recordRequest(method, path, res) {
+  const endpoint = `[${method}] ${path}`;
+  const info = requests[endpoint] || { count: 0, latency: 0, method, path };
   info.count++;
   requests[endpoint] = info;
 
@@ -35,9 +36,7 @@ const track = (req, res, next) => {
 
     info.latency += Date.now() - start;
   });
-
-  next();
-};
+}
 
 const pizzaMetrics = {
   purchases: 0,
@@ -133,4 +132,4 @@ function sendMetricToGrafana(metrics) {
     });
 }
 
-module.exports = { track, trackPizzaPurchase };
+module.exports = { track, trackPizzaPurchase, recordRequest };

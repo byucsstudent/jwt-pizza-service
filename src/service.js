@@ -20,10 +20,11 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(metrics.track);
 app.use(logger.httpLogger);
 
 const apiRouter = express.Router();
+apiRouter.use(metrics.track);
+
 app.use('/api', apiRouter);
 apiRouter.use('/auth', authRouter);
 apiRouter.use('/order', orderRouter);
@@ -38,6 +39,7 @@ apiRouter.use('/docs', (req, res) => {
 });
 
 app.get('/', (req, res) => {
+  metrics.recordRequest(req.method, 'root', res);
   res.json({
     message: 'welcome to JWT Pizza',
     version: version.version,
@@ -45,6 +47,7 @@ app.get('/', (req, res) => {
 });
 
 app.use('*', (req, res) => {
+  metrics.recordRequest(req.method, 'non-endpoint', res);
   res.status(404).json({
     message: 'unknown endpoint',
   });
