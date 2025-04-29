@@ -113,7 +113,7 @@ orderRouter.post(
       const totalPurchase = order.items.reduce((total, item) => total + item.price, 0);
       trackPizzaPurchase(1, 0, totalPurchase);
     } else {
-      res.status(500).send({ message: 'Failed to fulfill order at factoryx', followLinkToEndChaos: j.reportUrl });
+      res.status(500).send({ message: 'Failed to fulfill order at factory', followLinkToEndChaos: j.reportUrl });
       trackPizzaPurchase(0, 1, 0);
     }
 
