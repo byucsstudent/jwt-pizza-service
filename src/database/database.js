@@ -30,6 +30,44 @@ class DB {
     }
   }
 
+  async listUsers(page = 0, emailFilter = '*', nameFilter = '*', role) {
+    const connection = await this.getConnection();
+    const limit = config.db.listPerPage;
+    const offset = page * limit;
+
+    const formatFilter = (f) => f.replace(/\*/g, '%');
+    const filters = [emailFilter, nameFilter].map(formatFilter);
+
+    try {
+      const [email, name] = filters;
+
+      let users = await this.query(
+        connection,
+        `SELECT * FROM user 
+         WHERE email LIKE ? AND name LIKE ? 
+         ${role ? ' AND id IN (SELECT userId FROM userRole WHERE role=?)' : ''} 
+         LIMIT ${limit} OFFSET ${offset}`,
+        role ? [email, name, role] : [email, name]
+      );
+
+      users = await Promise.all(
+        users.map(async (user) => {
+          const roles = await this.query(connection, `SELECT * FROM userRole WHERE userId = ?`, [user.id]);
+          return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            roles: roles.map((r) => ({ objectId: r.objectId || undefined, role: r.role })),
+          };
+        })
+      );
+
+      return users;
+    } finally {
+      connection.end();
+    }
+  }
+
   async addUser(user) {
     const connection = await this.getConnection();
     try {
