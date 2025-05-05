@@ -51,7 +51,7 @@ function trackPizzaPurchase(purchases, failures, revenue) {
 }
 
 // This will periodically send metrics to Grafana
-setInterval(() => {
+const timer = setInterval(() => {
   const metrics = [];
   Object.keys(requests).forEach((endpoint) => {
     const info = requests[endpoint];
@@ -69,6 +69,8 @@ setInterval(() => {
 
   sendMetricToGrafana(metrics);
 }, 10000);
+
+timer.unref();
 
 function createMetric(metricName, metricValue, metricUnit, metricType, valueType, attributes) {
   attributes = { ...attributes, source: config.source };
