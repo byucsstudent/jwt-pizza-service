@@ -50,17 +50,10 @@ class DB {
         role ? [email, name, role] : [email, name]
       );
 
-      users = await Promise.all(
-        users.map(async (user) => {
-          const roles = await this.query(connection, `SELECT * FROM userRole WHERE userId = ?`, [user.id]);
-          return {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            roles: roles.map((r) => ({ objectId: r.objectId || undefined, role: r.role })),
-          };
-        })
-      );
+      for (const user of users) {
+        const roles = await this.query(connection, `SELECT * FROM userRole WHERE userId = ?`, [user.id]);
+        user.roles = roles.map((r) => ({ objectId: r.objectId || undefined, role: r.role }));
+      }
 
       return users;
     } finally {
