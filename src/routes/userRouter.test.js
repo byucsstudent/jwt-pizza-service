@@ -3,16 +3,20 @@ const app = require('../service');
 const testUtil = require('../testUtil');
 
 let dinerUser;
-let dinerAuthToken;
+let dinerToken;
 
 beforeAll(async () => {
-  [dinerUser, dinerAuthToken] = await testUtil.registerUser(request(app));
+  [dinerUser, dinerToken] = await testUtil.registerUser(request(app));
+});
+
+afterAll(async () => {
+  await deleteUser(dinerUser.id, dinerToken);
 });
 
 test('get me', async () => {
   const updateRes = await request(app)
     .get('/api/user/me')
-    .set('Authorization', 'Bearer ' + dinerAuthToken);
+    .set('Authorization', 'Bearer ' + dinerToken);
   expect(updateRes.status).toBe(200);
   expect(updateRes.body.email).toMatch(dinerUser.email);
 });
@@ -22,7 +26,7 @@ test('update user', async () => {
   const updateRes = await request(app)
     .put('/api/user/' + user.id)
     .send(user)
-    .set('Authorization', 'Bearer ' + dinerAuthToken);
+    .set('Authorization', 'Bearer ' + dinerToken);
   expect(updateRes.status).toBe(200);
   expect(updateRes.body.user.email).toMatch(user.email);
 });
@@ -42,6 +46,8 @@ test('update user wrong user', async () => {
     .send(user)
     .set('Authorization', 'Bearer ' + userToken);
   expect(updateRes.status).toBe(403);
+
+  await deleteUser(user.id, userToken);
 });
 
 test('list users unauthorized', async () => {
@@ -56,6 +62,8 @@ test('list users', async () => {
     .set('Authorization', 'Bearer ' + userToken);
   expect(listUsersRes.status).toBe(200);
   expect(listUsersRes.body.users.length).toBeGreaterThan(0);
+
+  await deleteUser(user.id, userToken);
 });
 
 test('list users filter match all', async () => {
@@ -67,6 +75,8 @@ test('list users filter match all', async () => {
   expect(listUsersRes.status).toBe(200);
   expect(listUsersRes.body.users.length).toBe(1);
   expect(listUsersRes.body.users[0]).toMatchObject(user);
+
+  await deleteUser(user.id, userToken);
 });
 
 test('list users filter match none', async () => {
@@ -77,6 +87,8 @@ test('list users filter match none', async () => {
     .set('Authorization', 'Bearer ' + userToken);
   expect(listUsersRes.status).toBe(200);
   expect(listUsersRes.body.users.length).toBe(0);
+
+  await deleteUser(user.id, userToken);
 });
 
 test('list users filter match email wildcard', async () => {
@@ -89,4 +101,18 @@ test('list users filter match email wildcard', async () => {
   expect(listUsersRes.status).toBe(200);
   expect(listUsersRes.body.users.length).toBe(1);
   expect(listUsersRes.body.users[0]).toMatchObject(user);
+
+  await deleteUser(user.id, userToken);
 });
+
+test('delete user', async () => {
+  const [user, userToken] = await testUtil.registerUser(request(app));
+  const deleteRes = await deleteUser(user.id, userToken);
+  expect(deleteRes.status).toBe(201);
+});
+
+async function deleteUser(userId, userToken) {
+  return request(app)
+    .delete('/api/user/' + userId)
+    .set('Authorization', 'Bearer ' + userToken);
+}
