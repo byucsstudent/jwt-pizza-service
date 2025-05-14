@@ -5,7 +5,7 @@ const testUtil = require('../testUtil');
 test('franchise get all', async () => {
   const franchisesRes = await request(app).get('/api/franchise');
   expect(franchisesRes.status).toBe(200);
-  expect(Array.isArray(franchisesRes.body)).toBe(true);
+  expect(Array.isArray(franchisesRes.body.franchises)).toBe(true);
 });
 
 test('franchise get specific user', async () => {
@@ -97,7 +97,7 @@ test('franchise delete store no auth', async () => {
 
 async function getStore(franchiseId, storeId) {
   const franchisesRes = await request(app).get('/api/franchise');
-  const franchises = franchisesRes.body;
+  const franchises = franchisesRes.body.franchises;
   const franchise = franchises.find((franchise) => franchise.id === franchiseId);
   if (franchise) {
     const store = franchise.stores.find((store) => store.id === storeId);

@@ -3,10 +3,9 @@ const app = require('../service');
 const testUtil = require('../testUtil');
 
 let dinerUser;
-let dinerAuthToken;
 
 beforeAll(async () => {
-  [dinerUser, dinerAuthToken] = await testUtil.registerUser(request(app));
+  [dinerUser] = await testUtil.registerUser(request(app));
 });
 
 test('register', async () => {
