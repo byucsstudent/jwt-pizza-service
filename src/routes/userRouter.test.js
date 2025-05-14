@@ -108,7 +108,7 @@ test('list users filter match email wildcard', async () => {
 test('delete user', async () => {
   const [user, userToken] = await testUtil.registerUser(request(app));
   const deleteRes = await deleteUser(user.id, userToken);
-  expect(deleteRes.status).toBe(201);
+  expect(deleteRes.status).toBe(200);
 });
 
 async function deleteUser(userId, userToken) {

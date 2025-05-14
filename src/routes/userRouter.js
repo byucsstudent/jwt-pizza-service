@@ -91,7 +91,7 @@ userRouter.delete(
     }
 
     await DB.deleteUser(userId);
-    res.status(201).end();
+    res.json({ message: 'delete successful' });
   })
 );
 
