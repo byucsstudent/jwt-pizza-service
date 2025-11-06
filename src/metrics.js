@@ -4,12 +4,6 @@ const config = appConfig.metrics;
 
 // Metrics stored in memory
 const requests = {};
-let greetingChangedCount = 0;
-
-// Function to track when the greeting is changed
-function greetingChanged() {
-  greetingChangedCount++;
-}
 
 // Middleware to track requests
 function requestTracker(req, res, next) {
@@ -23,7 +17,6 @@ setInterval(() => {
   const metrics = [];
   Object.keys(requests).forEach((endpoint) => {
     metrics.push(createMetric('requests', requests[endpoint], '1', 'sum', 'asInt', { endpoint }));
-    metrics.push(createMetric('greetingChange', greetingChangedCount, '1', 'sum', 'asInt', {}));
   });
 
   sendMetricToGrafana(metrics);
@@ -62,6 +55,7 @@ function createMetric(metricName, metricValue, metricUnit, metricType, valueType
 }
 
 function sendMetricToGrafana(metrics) {
+  console.log('Sending metrics to Grafana:', metrics);
   const body = {
     resourceMetrics: [
       {
@@ -89,4 +83,4 @@ function sendMetricToGrafana(metrics) {
     });
 }
 
-module.exports = { requestTracker, greetingChanged };
+module.exports = { requestTracker };
