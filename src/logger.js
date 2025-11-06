@@ -1,6 +1,6 @@
 const appConfig = require('./config.js');
 
-config = appConfig.logging;
+const config = appConfig.logging;
 
 class Logger {
   httpLogger = (req, res, next) => {
