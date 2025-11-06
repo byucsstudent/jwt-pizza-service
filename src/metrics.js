@@ -55,7 +55,6 @@ function createMetric(metricName, metricValue, metricUnit, metricType, valueType
 }
 
 function sendMetricToGrafana(metrics) {
-  console.log('Sending metrics to Grafana:', metrics);
   const body = {
     resourceMetrics: [
       {
