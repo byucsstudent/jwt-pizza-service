@@ -4,6 +4,7 @@ const config = appConfig.metrics;
 
 // Metrics stored in memory
 const requests = {};
+const generalMetrics = {};
 
 // Middleware to track requests
 function requestTracker(req, res, next) {
@@ -12,11 +13,24 @@ function requestTracker(req, res, next) {
   next();
 }
 
+function addMetric(name, value, attributes = {}) {
+  const index = `${name}-${JSON.stringify(attributes)})`;
+  if (!generalMetrics[index]) {
+    generalMetrics[index] = { name, value: 0, attributes };
+  }
+  generalMetrics[index].value += value;
+}
+
 // This will periodically send metrics to Grafana
 const timer = setInterval(() => {
   const metrics = [];
   Object.keys(requests).forEach((endpoint) => {
     metrics.push(createMetric('requests', requests[endpoint], '1', 'sum', 'asInt', { endpoint }));
+  });
+
+  Object.keys(generalMetrics).forEach((index) => {
+    const metricData = generalMetrics[index];
+    metrics.push(createMetric(metricData.name, metricData.value, '1', 'sum', 'asInt', metricData.attributes));
   });
 
   sendMetricToGrafana(metrics);
@@ -84,4 +98,4 @@ function sendMetricToGrafana(metrics) {
     });
 }
 
-module.exports = { requestTracker };
+module.exports = { requestTracker, addMetric };
