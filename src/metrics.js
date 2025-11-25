@@ -1,6 +1,9 @@
+const { version } = require('react');
 const appConfig = require('./config');
+const versionInfo = require('./version');
 
 const config = appConfig.metrics;
+const version = versionInfo.version || 'unknown';
 
 // Metrics stored in memory
 const requests = {};
@@ -39,7 +42,7 @@ const timer = setInterval(() => {
 timer.unref();
 
 function createMetric(metricName, metricValue, metricUnit, metricType, valueType, attributes) {
-  attributes = { ...attributes, source: config.source };
+  attributes = { ...attributes, source: config.source, version };
 
   const metric = {
     name: metricName,
