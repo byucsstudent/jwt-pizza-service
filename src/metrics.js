@@ -1,9 +1,13 @@
-const { version } = require('react');
 const appConfig = require('./config');
 const versionInfo = require('./version');
 
 const config = appConfig.metrics;
-const version = versionInfo.version || 'unknown';
+const version =
+  versionInfo.version ||
+  new Date()
+    .toISOString()
+    .replace(/[-T:.Z]/g, '')
+    .slice(0, 13);
 
 // Metrics stored in memory
 const requests = {};
