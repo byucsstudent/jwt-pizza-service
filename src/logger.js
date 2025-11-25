@@ -11,6 +11,7 @@ class Logger {
         path: req.originalUrl,
         method: req.method,
         statusCode: res.statusCode,
+        reqHeaders: JSON.stringify({ ...req.headers, authorization: undefined }),
         reqBody: JSON.stringify(req.body),
         resBody: JSON.stringify(resBody),
       };
