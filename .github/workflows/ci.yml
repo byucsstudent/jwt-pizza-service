@@ -136,4 +136,4 @@ jobs:
           aws ecs update-service --cluster jwt-pizza-service --service jwt-pizza-service --force-new-deployment
       - name: Annotate deployment in Grafana
         run: |
-          curl -s -X POST https://be329f24.grafana.net/api/annotations -H "Authorization: Bearer ${{ secrets.GRAFANA_SERVICE_EDITOR }}" -H "Content-Type:application/json" -d '{"dashboardUID":"bek5nlg", "panelId":3, "tags":["backend","production"], "text":"Version '"$version"' deployed" }'
+          curl -s -X POST https://be329f24.grafana.net/api/annotations -H "Authorization: Bearer ${{ secrets.GRAFANA_SERVICE_EDITOR }}" -H "Content-Type:application/json" -d '{"dashboardUID":"bek5nlg", "panelId":5, "tags":["backend","production"], "text":"Version '"$version"' deployed" }'
