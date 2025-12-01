@@ -21,7 +21,7 @@ function requestTracker(req, res, next) {
   let status = res.status;
   res.status = (resStatusCode) => {
     if (resStatusCode >= 400) {
-      addMetric('errors', 1, { path: req.path, method: req.method, statusCode: resStatusCode.toString() });
+      addMetric('errors', 1, { path: req.originalUrl, method: req.method, statusCode: resStatusCode.toString() });
     }
     res.status = status;
     return res.status(resStatusCode);
