@@ -28,11 +28,11 @@ login() {
   echo $token
 }
 
-# Simulate a user requesting the menu every 0.5 seconds
+# Simulate a user requesting the menu every 10 seconds
 while true; do
   result=$(execute_curl $host/api/order/menu)
   echo "Requesting menu..." $result
-  sleep .5
+  sleep 10
 done &
 pid1=$!
 

@@ -3,6 +3,17 @@ const appConfig = require('./config.js');
 const config = appConfig.logging;
 
 class Logger {
+  logQueue = [];
+
+  constructor() {
+    setInterval(() => {
+      if (this.logQueue.length > 0) {
+        const logsToSend = { streams: this.logQueue.splice(0) };
+        this.sendLogToGrafana(logsToSend);
+      }
+    }, 10000);
+  }
+
   httpLogger = (req, res, next) => {
     let send = res.send;
     res.send = (resBody) => {
@@ -26,9 +37,7 @@ class Logger {
   log(level, type, logData) {
     const labels = { component: config.source, level: level, type: type };
     const values = [this.nowString(), this.sanitize(logData)];
-    const logEvent = { streams: [{ stream: labels, values: [values] }] };
-
-    this.sendLogToGrafana(logEvent);
+    this.logQueue.push({ stream: labels, values: [values] });
   }
 
   statusToLogLevel(statusCode) {

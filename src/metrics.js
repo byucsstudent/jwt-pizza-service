@@ -17,6 +17,16 @@ const generalMetrics = {};
 function requestTracker(req, res, next) {
   const endpoint = `[${req.method}] ${req.path}`;
   requests[endpoint] = (requests[endpoint] || 0) + 1;
+
+  let status = res.status;
+  res.status = (resStatusCode) => {
+    if (resStatusCode >= 400) {
+      addMetric('errors', 1, { path: req.path, method: req.method, statusCode: resStatusCode.toString() });
+    }
+    res.status = status;
+    return res.status(resStatusCode);
+  };
+
   next();
 }
 
@@ -40,7 +50,9 @@ const timer = setInterval(() => {
     metrics.push(createMetric(metricData.name, metricData.value, '1', 'sum', 'asInt', metricData.attributes));
   });
 
-  sendMetricToGrafana(metrics);
+  if (metrics.length > 0) {
+    sendMetricToGrafana(metrics);
+  }
 }, 10000);
 
 timer.unref();
@@ -90,9 +102,10 @@ function sendMetricToGrafana(metrics) {
     ],
   };
 
+  const bodyString = JSON.stringify(body);
   fetch(`${config.url}`, {
     method: 'POST',
-    body: JSON.stringify(body),
+    body: bodyString,
     headers: { Authorization: `Bearer ${config.apiKey}`, 'Content-Type': 'application/json' },
   })
     .then((response) => {
