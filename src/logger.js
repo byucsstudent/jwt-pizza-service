@@ -6,12 +6,14 @@ class Logger {
   logQueue = [];
 
   constructor() {
-    setInterval(() => {
+    const timer = setInterval(() => {
       if (this.logQueue.length > 0) {
         const logsToSend = { streams: this.logQueue.splice(0) };
         this.sendLogToGrafana(logsToSend);
       }
     }, 10000);
+
+    timer.unref();
   }
 
   httpLogger = (req, res, next) => {
